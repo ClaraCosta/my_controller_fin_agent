@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="grid gap-6 lg:grid-cols-[320px_1fr]">
+  <aside class="rounded-3xl bg-white p-5 shadow-sm">
+    <h2 class="text-xl font-bold">Histórico</h2>
+    <p class="mt-2 text-sm text-slate-500">As mensagens da sessão atual aparecem aqui conforme o chat evolui.</p>
+    <div id="chat-history" class="mt-4 space-y-3"></div>
+  </aside>
+  <div class="rounded-3xl bg-white p-5 shadow-sm">
+    <h2 class="text-xl font-bold">Chat operacional</h2>
+    <p class="mt-2 text-sm text-slate-500">Busque registros e gere resumos com base nos dados do sistema.</p>
+    <div id="chat-response" class="mt-6 min-h-48 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700"></div>
+    <form id="chat-form" class="mt-6 flex gap-3">
+      <input id="chat-input" class="flex-1 rounded-2xl border border-slate-200 px-4 py-3" placeholder="Ex.: Quais clientes têm solicitações em aberto?" />
+      <button class="rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white" type="submit">Enviar</button>
+    </form>
+    <p id="chat-loading" class="mt-3 text-sm text-sky-700"></p>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/chat.js"></script>
+{% endblock %}
+

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | MY CONTROLLER FINANCE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-[radial-gradient(circle_at_top,#dbeafe,transparent_35%),linear-gradient(135deg,#0f172a,#1e293b)] px-4 py-10 text-slate-900">
+    <div class="mx-auto max-w-md rounded-3xl bg-white/95 p-8 shadow-2xl backdrop-blur">
+      <h1 class="text-3xl font-black tracking-tight text-slate-900">AI Ops Platform</h1>
+      <p class="mt-2 text-sm text-slate-600">Entre com o usuário padrão para validar a stack inicial.</p>
+      <form id="login-form" class="mt-8 space-y-4">
+        <input class="w-full rounded-2xl border border-slate-200 px-4 py-3" name="email" type="email" value="admin@example.com" />
+        <input class="w-full rounded-2xl border border-slate-200 px-4 py-3" name="password" type="password" value="admin123" />
+        <button class="w-full rounded-2xl bg-sky-500 px-4 py-3 font-semibold text-white" type="submit">Entrar</button>
+      </form>
+      <p id="login-feedback" class="mt-4 text-sm text-slate-600"></p>
+    </div>
+    <script src="/static/js/login.js"></script>
+  </body>
+</html>
+

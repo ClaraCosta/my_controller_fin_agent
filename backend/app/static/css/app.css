@@ -1,0 +1,11 @@
+body {
+  font-family: "Segoe UI", sans-serif;
+}
+
+.card {
+  border-radius: 1.5rem;
+  background: white;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+

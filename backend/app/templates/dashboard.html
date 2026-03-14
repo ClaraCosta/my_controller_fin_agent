@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="space-y-6">
+  <header>
+    <p class="text-sm uppercase tracking-[0.25em] text-sky-700">Operações</p>
+    <h2 class="text-4xl font-black">Dashboard inicial</h2>
+  </header>
+  <div id="dashboard-cards" class="grid gap-4 md:grid-cols-4"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}
+
