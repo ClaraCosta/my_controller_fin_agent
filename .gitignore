@@ -36,3 +36,7 @@ Thumbs.db
 postgres_data/
 ollama_data/
 
+scripts/create_user.py
+scripts/.venv_mini_scripts
+scripts/requirements.txt
+PROJECT_GUIDELINES.md
