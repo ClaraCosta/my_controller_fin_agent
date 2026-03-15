@@ -12,6 +12,7 @@ class Document(TimestampMixin, Base):
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"), nullable=False, index=True)
     document_type: Mapped[str] = mapped_column(String(20), nullable=False)
     entry_mode: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
     file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)

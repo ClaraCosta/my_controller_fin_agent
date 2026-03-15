@@ -10,12 +10,9 @@
       </div>
       <div class="rounded-2xl bg-gradient-to-r from-[#eaf2ff] to-[#efe9ff] px-4 py-3 text-sm font-semibold text-[#2b65d9]">Atualizado em tempo real</div>
     </div>
-    <div class="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-      <div id="dashboard-cards" class="grid gap-4 md:grid-cols-2"></div>
-      <article class="group relative rounded-[1.8rem] border border-[#e6ebf4] bg-white p-5 shadow-sm">
-        <div class="pointer-events-none absolute right-5 top-5 z-10 max-w-xs rounded-2xl bg-[#1d2740] px-4 py-3 text-sm font-medium leading-6 text-white opacity-0 shadow-[0_16px_40px_rgba(18,27,48,0.18)] transition duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-          Mock do desempenho operacional mensal. No futuro, este bloco vai consolidar clientes, contatos, solicitações e documentos processados ao longo do tempo.
-        </div>
+    <div class="grid items-stretch gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <div id="dashboard-cards" class="grid auto-rows-fr gap-4 md:grid-cols-2"></div>
+      <article class="flex h-full flex-col rounded-[1.8rem] border border-[#e6ebf4] bg-white p-5 shadow-sm">
         <div class="mb-6 flex items-start justify-between gap-4">
           <div>
             <p class="text-base font-semibold text-[#25324d]">Desempenho operacional</p>
@@ -27,7 +24,7 @@
           </div>
           <div class="rounded-2xl border border-[#e6ebf4] px-4 py-3 text-sm font-medium text-[#5f6f8c]">2025</div>
         </div>
-        <div class="relative h-[18rem] overflow-hidden rounded-[1.5rem] bg-[#fbfcff] p-4">
+        <div class="relative mt-1 min-h-[21.5rem] flex-1 overflow-hidden rounded-[1.5rem] bg-[#fbfcff] p-4">
           <div class="absolute inset-x-4 top-4 bottom-4 flex flex-col justify-between text-xs text-[#9aa7c0]">
             <div class="border-b border-dashed border-[#e3e9f4] pb-2">5k</div>
             <div class="border-b border-dashed border-[#e3e9f4] pb-2">4k</div>
@@ -65,14 +62,14 @@
         <div class="flex flex-1 items-center rounded-[1.6rem] border border-[#cfe0fb] bg-[#fbfdff] px-4 py-3 shadow-soft">
           <div class="mr-3 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#3478f6] to-[#6c5ce7] text-xs font-bold text-white">AI</div>
           <input id="dashboard-chat-input" class="w-full bg-transparent text-[15px] text-[#32415d] outline-none placeholder:text-[#7e8aa3]" placeholder="Pergunte ao agente algo sobre clientes, contatos, solicitacoes ou relatorios..." />
-          <button class="ml-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#e9f1ff] text-[#2d62cf] transition hover:bg-[#dbe8ff]" type="submit">↑</button>
+          <button class="ml-3 rounded-[1.2rem] bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 font-semibold text-white shadow-soft" type="submit">Enviar</button>
         </div>
       </form>
-      <div class="flex flex-wrap gap-3">
-        <button data-chat-shortcut="Quais pendencias operacionais exigem atencao agora?" class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Pendencias</button>
-        <button data-chat-shortcut="Quero localizar ou criar um cliente no sistema." class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Criar cliente</button>
-        <button data-chat-shortcut="Quero abrir uma nova solicitacao operacional." class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Criar solicitacao</button>
-        <button data-chat-shortcut="Gere um relatorio rapido com base nos dados atuais." class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Relatorio rapido</button>
+      <div class="flex flex-wrap justify-center gap-3">
+        <button data-chat-shortcut="Quais pendencias operacionais exigem atencao agora?" class="dashboard-shortcut-btn">Pendencias</button>
+        <button data-chat-shortcut="Quero localizar ou criar um cliente no sistema." class="dashboard-shortcut-btn">Criar cliente</button>
+        <button data-chat-shortcut="Quero abrir uma nova solicitacao operacional." class="dashboard-shortcut-btn">Criar solicitacao</button>
+        <button data-chat-shortcut="Gere um relatorio rapido com base nos dados atuais." class="dashboard-shortcut-btn">Relatorio rapido</button>
       </div>
     </div>
   </section>
@@ -84,7 +81,7 @@
         <h3 class="mt-1 text-3xl font-extrabold tracking-tight text-[#18233d]">Clientes</h3>
       </div>
       <div class="flex flex-wrap gap-3">
-        <button class="rounded-2xl bg-gradient-to-r from-shell.primary to-shell.secondary px-5 py-3 text-sm font-semibold text-white shadow-soft">Create Client</button>
+        <button id="open-client-modal" class="rounded-2xl bg-[#3478f6] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(52,120,246,0.22)] transition hover:bg-[#2f6ee1]">Create Client</button>
       </div>
     </div>
     <div class="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -100,7 +97,7 @@
         <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex">⇩</div>
       </div>
     </div>
-    <div class="dashboard-table-wrap overflow-hidden rounded-[1.5rem] border border-shell.line">
+    <div class="dashboard-table-wrap overflow-hidden rounded-[1.5rem]">
       <table id="clients-table" class="display w-full">
         <thead>
           <tr>
@@ -117,6 +114,60 @@
     </div>
   </section>
 </section>
+
+<div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Cadastro de cliente</p>
+        <h3 id="client-modal-title" class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Novo cliente</h3>
+      </div>
+      <button data-close-modal="client-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="client-form" class="grid gap-4 md:grid-cols-2">
+      <input id="client-id" type="hidden" />
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Nome do cliente</span>
+        <input id="client-name" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Razão social ou nome" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Documento</span>
+        <input id="client-document-number" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="CPF/CNPJ" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Status</span>
+        <select id="client-status" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
+          <option value="active">Ativo</option>
+          <option value="new">Novo</option>
+          <option value="review">Em análise</option>
+          <option value="inactive">Inativo</option>
+        </select>
+      </label>
+      <div class="hidden md:block"></div>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Contato principal</span>
+        <input id="client-primary-contact-name" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Nome do contato" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Função</span>
+        <input id="client-primary-contact-role" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Financeiro, compras..." />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Email</span>
+        <input id="client-primary-contact-email" type="email" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="contato@empresa.com" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Telefone</span>
+        <input id="client-primary-contact-phone" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="(00) 00000-0000" />
+      </label>
+      <p id="client-form-feedback" class="md:col-span-2 min-h-6 text-sm text-[#5f6f8c]"></p>
+      <div class="md:col-span-2 flex flex-wrap justify-end gap-3 pt-2">
+        <button type="button" data-close-modal="client-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+        <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Salvar cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

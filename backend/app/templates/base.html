@@ -44,10 +44,6 @@
             </div>
           </div>
         </div>
-        <div class="mb-8 rounded-3xl border border-[#274a82] bg-gradient-to-r from-[#17386b] to-[#21467f] p-4 shadow-sm">
-          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#8eb8ff]">Workspace</p>
-          <p class="mt-2 text-sm leading-6 text-[#d7e5ff]">Painel moderno para atendimento, operacao e inteligencia aplicada.</p>
-        </div>
         <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#8ea8d1]">Principal</p>
         <nav class="space-y-2 text-sm">
           <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/dashboard' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/dashboard">
@@ -120,6 +116,10 @@
       </header>
       <main class="p-5 pt-28 md:p-8 md:pt-32 xl:p-10 xl:pt-32">
         {% block content %}{% endblock %}
+        <footer class="mt-10 pb-4 text-center text-sm text-[#72809d]">
+          feito com <span class="font-semibold text-[#3478f6]">&lt;3</span> por
+          <a class="font-semibold text-[#3478f6] transition hover:text-[#2f6ee1]" href="https://www.mariaclaradev.com.br" target="_blank" rel="noreferrer">Maria Clara</a>
+        </footer>
       </main>
     </div>
     <script src="/static/js/app.js"></script>
