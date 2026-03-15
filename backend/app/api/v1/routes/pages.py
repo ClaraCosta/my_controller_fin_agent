@@ -20,3 +20,7 @@ def dashboard_page(request: Request):
 def chat_page(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request})
 
+
+@router.get("/central-fiscal", response_class=HTMLResponse)
+def fiscal_center_page(request: Request):
+    return templates.TemplateResponse("fiscal_center.html", {"request": request})

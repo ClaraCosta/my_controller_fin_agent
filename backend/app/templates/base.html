@@ -5,21 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title or "MY CONTROLLER FINANCE" }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              shell: {
+                base: "#f5f7fb",
+                panel: "#ffffff",
+                line: "#e6ebf4",
+                text: "#1f2a44",
+                muted: "#72809d",
+                primary: "#3478f6",
+                secondary: "#6c5ce7",
+                success: "#16c47f",
+              },
+            },
+            boxShadow: {
+              shell: "0 20px 50px rgba(31, 42, 68, 0.08)",
+              soft: "0 10px 30px rgba(52, 120, 246, 0.08)",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/css/app.css" />
   </head>
-  <body class="min-h-screen bg-slate-100 text-slate-900">
-    <div class="min-h-screen md:grid md:grid-cols-[260px_1fr]">
-      <aside class="bg-slate-900 px-6 py-8 text-white">
-        <div class="mb-8">
-          <h1 class="text-2xl font-bold">AI Ops</h1>
-          <p class="text-sm text-slate-300">Plataforma operacional com IA</p>
+  <body class="min-h-screen bg-shell.base text-shell.text">
+    <div class="min-h-screen md:pl-[280px]">
+      <aside class="fixed inset-y-0 left-0 z-30 hidden w-[280px] overflow-y-auto border-r border-[#17315f] bg-gradient-to-b from-[#0e2448] via-[#102a52] to-[#14345f] px-6 py-8 text-white shadow-soft md:block">
+        <div class="mb-10">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4b86ff] to-[#7a6cff] text-lg font-black text-white shadow-soft">M</div>
+            <div>
+              <h1 class="text-xl font-extrabold tracking-tight">My Controller</h1>
+              <p class="text-sm text-[#a9bddf]">Finance AI Workspace</p>
+            </div>
+          </div>
         </div>
-        <nav class="space-y-3 text-sm">
-          <a class="block rounded-lg px-4 py-3 hover:bg-slate-800" href="/dashboard">Dashboard</a>
-          <a class="block rounded-lg px-4 py-3 hover:bg-slate-800" href="/chat">Chat</a>
+        <div class="mb-8 rounded-3xl border border-[#274a82] bg-gradient-to-r from-[#17386b] to-[#21467f] p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#8eb8ff]">Workspace</p>
+          <p class="mt-2 text-sm leading-6 text-[#d7e5ff]">Painel moderno para atendimento, operacao e inteligencia aplicada.</p>
+        </div>
+        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#8ea8d1]">Principal</p>
+        <nav class="space-y-2 text-sm">
+          <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/dashboard' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/dashboard">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/dashboard' %}bg-white/20 text-sm font-bold{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">D</span>
+            Dashboard
+          </a>
+          <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/chat' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/chat">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/chat' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">AI</span>
+            Chat
+          </a>
+          <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/central-fiscal' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/central-fiscal">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/central-fiscal' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">
+              <i class="fa-solid fa-file-invoice"></i>
+            </span>
+            Central Fiscal
+          </a>
         </nav>
       </aside>
-      <main class="p-6 md:p-10">
+      <header class="dashboard-topbar fixed left-0 right-0 top-0 z-20 md:left-[280px]">
+        <div class="mx-5 mt-4 flex items-center justify-between rounded-[1.4rem] border border-[#eef2f8] bg-white/95 px-4 py-3 shadow-[0_10px_30px_rgba(31,42,68,0.08)] backdrop-blur md:mx-8 xl:mx-10">
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#eef4ff] text-[#3478f6]">
+              <i class="fa-solid fa-bars-staggered"></i>
+            </span>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#72809d]">Workspace</p>
+              <p class="text-sm font-semibold text-[#1f2a44]">Ambiente operacional conectado</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#e8edf6] bg-white text-[#55637f] transition hover:border-[#d8e4fb] hover:text-[#24324d]">
+              <i class="fa-regular fa-bell"></i>
+            </button>
+            <div class="relative">
+              <button
+                id="user-menu-button"
+                type="button"
+                class="flex items-center gap-3 rounded-2xl border border-[#e8edf6] bg-white px-3 py-2 text-left shadow-sm transition hover:border-[#d8e4fb]"
+              >
+                <span id="topbar-user-avatar" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3478f6] to-[#6c5ce7] text-sm font-bold text-white">U</span>
+                <span class="hidden min-w-0 md:block">
+                  <span id="topbar-user-name" class="block truncate text-sm font-semibold text-[#24324d]">Usuario</span>
+                  <span id="topbar-user-email" class="block truncate text-xs text-[#72809d]">Aguardando sessao</span>
+                </span>
+                <i class="fa-solid fa-chevron-down text-xs text-[#72809d]"></i>
+              </button>
+              <div id="user-menu-dropdown" class="topbar-menu absolute right-0 mt-3 hidden w-72 rounded-[1.4rem] border border-[#e8edf6] bg-white p-3 shadow-[0_18px_40px_rgba(31,42,68,0.14)]">
+                <div class="rounded-[1.1rem] bg-[#f7f9fd] p-3">
+                  <p id="dropdown-user-name" class="text-sm font-semibold text-[#24324d]">Usuario</p>
+                  <p id="dropdown-user-email" class="mt-1 text-xs text-[#72809d]">Sem informacoes carregadas</p>
+                </div>
+                <div class="mt-3 space-y-1">
+                  <button type="button" id="user-profile-button" class="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[#24324d] transition hover:bg-[#f5f8ff]">
+                    <i class="fa-regular fa-user text-[#3478f6]"></i>
+                    Minhas informacoes
+                  </button>
+                  <button type="button" id="user-account-button" class="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[#24324d] transition hover:bg-[#f5f8ff]">
+                    <i class="fa-solid fa-shield-halved text-[#3478f6]"></i>
+                    Minha conta
+                  </button>
+                  <button type="button" id="user-logout-button" class="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[#d64f4f] transition hover:bg-[#fff4f4]">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Sair do sistema
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="p-5 pt-28 md:p-8 md:pt-32 xl:p-10 xl:pt-32">
         {% block content %}{% endblock %}
       </main>
     </div>
@@ -27,4 +126,3 @@
     {% block scripts %}{% endblock %}
   </body>
 </html>
-

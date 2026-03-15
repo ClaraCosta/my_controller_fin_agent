@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+<section class="space-y-8">
+  <section class="rounded-[2rem] bg-gradient-to-r from-[#edf4ff] via-[#f7f9ff] to-[#fdf8ff] p-6 shadow-shell">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Central Fiscal</p>
+        <h3 class="mt-2 text-3xl font-extrabold tracking-tight text-[#18233d]">Controle de documentos</h3>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-[#5f6f8c]">Espaço para registrar recibos e notas fiscais por preenchimento manual ou leitura automática com OCR/IA.</p>
+      </div>
+      <div class="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-[#65748f] shadow-sm">Sem backend por enquanto • experiência pronta para integração</div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-2">
+    <article class="rounded-[2rem] border border-[#dce6f8] bg-white p-6 shadow-shell">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Opção 1</p>
+          <h4 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Preenchimento manual</h4>
+          <p class="mt-2 text-sm leading-6 text-[#5f6f8c]">Escolha entre recibo ou nota fiscal e preencha os campos estruturados diretamente.</p>
+        </div>
+        <span class="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#edf3ff] text-[1.7rem] text-[#3478f6]">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </span>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button data-manual-type="receipt" class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Recibo</button>
+        <button data-manual-type="invoice" class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Nota fiscal</button>
+      </div>
+    </article>
+
+    <article class="rounded-[2rem] border border-[#dce6f8] bg-white p-6 shadow-shell">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Opção 2</p>
+          <h4 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Preenchimento automático</h4>
+          <p class="mt-2 text-sm leading-6 text-[#5f6f8c]">Anexe o documento para leitura por OCR e organização dos dados por IA.</p>
+        </div>
+        <span class="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#f1ebff] text-[1.7rem] text-[#7a5af8]">
+          <i class="fa-solid fa-file-arrow-up"></i>
+        </span>
+      </div>
+      <div class="mt-6">
+        <button id="open-auto-modal" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white shadow-soft">Leitura por IA</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Documentos</p>
+        <h3 class="mt-1 text-3xl font-extrabold tracking-tight text-[#18233d]">Listagem registrada</h3>
+        <p class="mt-2 text-sm text-[#65748f]">Tabela moderna para navegar, editar, excluir e inspecionar os documentos já cadastrados.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-gear"></i></div>
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-download"></i></div>
+      </div>
+    </div>
+    <div class="mb-5 flex flex-wrap gap-2">
+      <button class="rounded-xl bg-[#5b7df6] px-4 py-2 text-sm font-semibold text-white shadow-soft">Todos</button>
+      <button class="rounded-xl border border-[#e3e9f4] px-4 py-2 text-sm font-medium text-[#4f5d79]">Recibos</button>
+      <button class="rounded-xl border border-[#e3e9f4] px-4 py-2 text-sm font-medium text-[#4f5d79]">Notas fiscais</button>
+      <button class="rounded-xl border border-[#e3e9f4] px-4 py-2 text-sm font-medium text-[#4f5d79]">OCR</button>
+      <button class="rounded-xl border border-[#e3e9f4] px-4 py-2 text-sm font-medium text-[#4f5d79]">Manual</button>
+    </div>
+    <div class="dashboard-table-wrap overflow-hidden rounded-[1.5rem] border border-shell.line">
+      <table id="documents-table" class="display w-full">
+        <thead>
+          <tr>
+            <th><input type="checkbox" disabled class="h-4 w-4 rounded border-slate-300" /></th>
+            <th>Documento</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Entrada</th>
+            <th>Status</th>
+            <th>Atualizado</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </section>
+</section>
+
+<div id="manual-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Cadastro manual</p>
+        <h3 id="manual-modal-title" class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Novo documento</h3>
+      </div>
+      <button data-close-modal="manual-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form class="grid gap-4 md:grid-cols-2">
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Cliente</span>
+        <input class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Nome do cliente" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Número</span>
+        <input class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Número do documento" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Data de emissão</span>
+        <input type="date" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Valor</span>
+        <input class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="R$ 0,00" />
+      </label>
+      <label class="block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Descrição / referência</span>
+        <textarea class="min-h-28 w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Descreva o documento"></textarea>
+      </label>
+      <div id="manual-extra-fields" class="grid gap-4 md:col-span-2 md:grid-cols-2"></div>
+      <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+        <button type="button" data-close-modal="manual-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+        <button type="button" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Salvar rascunho</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="auto-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Leitura automática</p>
+        <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Upload para OCR + IA</h3>
+      </div>
+      <button data-close-modal="auto-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form class="grid gap-4 md:grid-cols-2">
+      <label class="block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Arquivo</span>
+        <div class="rounded-[1.5rem] border border-dashed border-[#b8cdf5] bg-[#f8fbff] px-4 py-8 text-center text-sm text-[#5f6f8c]">
+          <i class="fa-solid fa-cloud-arrow-up mb-3 text-2xl text-[#3478f6]"></i>
+          <p>Anexe PDF, imagem ou arquivo compatível para leitura automática.</p>
+          <input type="file" class="mt-4 block w-full text-sm" />
+        </div>
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Cliente</span>
+        <input class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Associar a um cliente" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Tipo esperado</span>
+        <select class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
+          <option>Detecção automática</option>
+          <option>Recibo</option>
+          <option>Nota fiscal</option>
+        </select>
+      </label>
+      <label class="block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Instruções adicionais</span>
+        <textarea class="min-h-28 w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Ex.: priorizar valor total e emitente"></textarea>
+      </label>
+      <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+        <button type="button" data-close-modal="auto-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+        <button type="button" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Processar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="/static/js/fiscal_center.js"></script>
+{% endblock %}

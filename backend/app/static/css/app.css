@@ -2,6 +2,19 @@ body {
   font-family: "Segoe UI", sans-serif;
 }
 
+.topbar-menu::before {
+  content: "";
+  position: absolute;
+  top: -0.45rem;
+  right: 1.35rem;
+  height: 0.9rem;
+  width: 0.9rem;
+  transform: rotate(45deg);
+  border-left: 1px solid #e8edf6;
+  border-top: 1px solid #e8edf6;
+  background: #ffffff;
+}
+
 .card {
   border-radius: 1.5rem;
   background: white;
@@ -9,3 +22,80 @@ body {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
+.dataTables_wrapper {
+  padding: 0;
+  background: #ffffff;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid #d8e4fb;
+  border-radius: 0.95rem;
+  background: #ffffff;
+  padding: 0.65rem 0.9rem;
+  color: #1f2a44;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 0.8rem !important;
+  border: 1px solid #e6ebf4 !important;
+  background: #ffffff !important;
+  color: #1f2a44 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  border-color: #3478f6 !important;
+  background: #eef4ff !important;
+  color: #3478f6 !important;
+}
+
+table.dataTable thead th {
+  border-bottom: 1px solid #e6ebf4 !important;
+  color: #72809d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+table.dataTable tbody td {
+  color: #1f2a44;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #eef2f8 !important;
+  vertical-align: middle;
+}
+
+.dashboard-table-wrap table.dataTable.no-footer {
+  border-bottom: 0;
+}
+
+.dashboard-table-wrap table.dataTable {
+  margin-top: 0 !important;
+}
+
+.dashboard-table-wrap .dataTables_info,
+.dashboard-table-wrap .dataTables_length,
+.dashboard-table-wrap .dataTables_filter {
+  color: #637089 !important;
+  font-size: 0.95rem;
+}
+
+.dashboard-table-wrap .dataTables_paginate {
+  padding-top: 1rem !important;
+}
+
+.dashboard-table-wrap[data-error]::before {
+  content: attr(data-error);
+  display: block;
+  margin: 0 0 1rem;
+  border-radius: 1rem;
+  background: #fff3ea;
+  color: #d9681d;
+  padding: 0.9rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}

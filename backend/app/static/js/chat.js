@@ -8,16 +8,28 @@ function appendHistory(role, content) {
   history.prepend(item);
 }
 
-document.getElementById("chat-form")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const input = document.getElementById("chat-input");
-  const loading = document.getElementById("chat-loading");
-  const responseBox = document.getElementById("chat-response");
-  const message = input.value.trim();
+function appendMessage(role, content) {
+  const messages = document.getElementById("chat-messages");
+  const wrapper = document.createElement("div");
+  wrapper.className = role === "user" ? "flex justify-end" : "flex justify-start";
 
-  if (!message) return;
+  const bubble = document.createElement("div");
+  bubble.className =
+    role === "user"
+      ? "max-w-[78%] rounded-[1.4rem] rounded-br-md bg-slate-900 px-4 py-3 text-sm leading-7 text-white shadow-sm"
+      : "max-w-[78%] rounded-[1.4rem] rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700 shadow-sm";
+  bubble.textContent = content;
+
+  wrapper.appendChild(bubble);
+  messages.appendChild(wrapper);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function sendChatMessage(message) {
+  const loading = document.getElementById("chat-loading");
 
   appendHistory("user", message);
+  appendMessage("user", message);
   loading.textContent = "Consultando dados do sistema...";
 
   const response = await fetch("/api/v1/chat/message", {
@@ -29,22 +41,31 @@ document.getElementById("chat-form")?.addEventListener("submit", async (event) =
   loading.textContent = "";
 
   if (!response.ok) {
-    responseBox.textContent = "Nao foi possivel processar a mensagem.";
+    appendMessage("assistant", "Nao foi possivel processar a mensagem.");
     return;
   }
 
   const data = await response.json();
   currentSessionId = data.session_id;
-  responseBox.innerHTML = `
-    <h3 class="text-lg font-bold">Resumo</h3>
-    <p class="mt-2">${data.answer.summary}</p>
-    <h4 class="mt-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Pontos principais</h4>
-    <ul class="mt-2 list-disc pl-5">
-      ${data.answer.data_points.map((item) => `<li>${item}</li>`).join("")}
-    </ul>
-    <p class="mt-4 text-xs uppercase tracking-wide text-sky-700">Fonte: ${data.answer.source}</p>
-  `;
   appendHistory("assistant", data.answer.summary);
+  appendMessage("assistant", data.answer.summary);
+}
+
+document.getElementById("chat-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  await sendChatMessage(message);
   input.value = "";
 });
 
+window.addEventListener("load", async () => {
+  const pendingMessage = sessionStorage.getItem("pending_chat_message");
+  if (!pendingMessage) return;
+
+  sessionStorage.removeItem("pending_chat_message");
+  await sendChatMessage(pendingMessage);
+});
