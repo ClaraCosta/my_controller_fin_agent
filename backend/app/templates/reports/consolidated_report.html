@@ -6,7 +6,7 @@
     <style>
       @page {
         size: A4;
-        margin: 12mm;
+        margin: 0;
       }
 
       body {
@@ -14,18 +14,17 @@
         font-family: DejaVu Sans, sans-serif;
         color: #22314d;
         font-size: 11px;
-        background: linear-gradient(180deg, #2f5c95 0%, #214a7f 100%);
+        background: #2f5c95;
       }
 
       .page-shell {
         position: relative;
         overflow: hidden;
-        min-height: 100%;
-        padding: 12px;
-        border-radius: 28px;
+        min-height: 100vh;
+        padding: 26px;
         background:
           radial-gradient(circle at top right, rgba(118, 216, 255, 0.18), transparent 24%),
-          linear-gradient(180deg, rgba(47, 92, 149, 0.98) 0%, rgba(27, 65, 114, 1) 100%);
+          #2f5c95;
       }
 
       .page-shell::before {
