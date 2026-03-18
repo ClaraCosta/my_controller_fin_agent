@@ -1,5 +1,7 @@
 let documentsTable = null;
 let lastManualAction = "processed";
+let activeDocumentFilter = { type: "", status: "" };
+let manualReviewAction = null;
 
 function openModal(id) {
   const modal = document.getElementById(id);
@@ -13,6 +15,18 @@ function closeModal(id) {
   if (!modal) return;
   modal.classList.add("hidden");
   modal.classList.remove("flex");
+}
+
+function updateDocumentFilterButtons() {
+  document.querySelectorAll(".document-filter-btn").forEach((button) => {
+    const isActive =
+      button.getAttribute("data-doc-filter-type") === activeDocumentFilter.type &&
+      button.getAttribute("data-doc-filter-status") === activeDocumentFilter.status;
+
+    button.className = isActive
+      ? "document-filter-btn rounded-xl bg-[#5b7df6] px-4 py-2 text-sm font-semibold text-white shadow-soft"
+      : "document-filter-btn rounded-xl border border-[#e3e9f4] px-4 py-2 text-sm font-medium text-[#4f5d79]";
+  });
 }
 
 function documentTypeLabel(type) {
@@ -45,11 +59,16 @@ async function loadClientsOptions() {
 
 function resetManualForm() {
   lastManualAction = "processed";
+  manualReviewAction = null;
   document.getElementById("manual-document-form")?.reset();
   document.getElementById("manual-document-id").value = "";
   document.getElementById("manual-status-wrap").classList.add("hidden");
+  document.getElementById("manual-ocr-text-wrap").classList.add("hidden");
   document.getElementById("manual-status").value = "processed";
+  document.getElementById("manual-ocr-text").value = "";
   document.getElementById("manual-form-feedback").textContent = "";
+  document.getElementById("manual-review-approve-button").classList.add("hidden");
+  document.getElementById("manual-review-reject-button").classList.add("hidden");
 }
 
 function setManualFields(type, mode = "create") {
@@ -57,16 +76,28 @@ function setManualFields(type, mode = "create") {
   const extra = document.getElementById("manual-extra-fields");
   const documentType = document.getElementById("manual-document-type");
   const statusWrap = document.getElementById("manual-status-wrap");
+  const ocrTextWrap = document.getElementById("manual-ocr-text-wrap");
   const processButton = document.getElementById("manual-process-button");
   const draftButton = document.getElementById("manual-draft-button");
+  const approveButton = document.getElementById("manual-review-approve-button");
+  const rejectButton = document.getElementById("manual-review-reject-button");
 
   if (!title || !extra || !documentType) return;
 
   documentType.value = type;
-  title.textContent = mode === "edit" ? `Editar ${documentTypeLabel(type)}` : `Novo ${documentTypeLabel(type)} manual`;
+  title.textContent =
+    mode === "review"
+      ? `Revisar ${documentTypeLabel(type)}`
+      : mode === "edit"
+        ? `Editar ${documentTypeLabel(type)}`
+        : `Novo ${documentTypeLabel(type)} manual`;
   statusWrap.classList.toggle("hidden", mode !== "edit");
+  ocrTextWrap.classList.toggle("hidden", mode !== "review");
   processButton.textContent = mode === "edit" ? "Salvar alterações" : "Processar manualmente";
-  draftButton.classList.toggle("hidden", mode === "edit");
+  processButton.classList.toggle("hidden", mode === "review");
+  draftButton.classList.toggle("hidden", mode === "edit" || mode === "review");
+  approveButton.classList.toggle("hidden", mode !== "review");
+  rejectButton.classList.toggle("hidden", mode !== "review");
 
   if (type === "receipt") {
     extra.innerHTML = `
@@ -163,6 +194,7 @@ function fillManualForm(data) {
   document.getElementById("manual-amount").value = data.amount || "";
   document.getElementById("manual-description").value = data.description || "";
   document.getElementById("manual-status").value = data.status || "processed";
+  document.getElementById("manual-ocr-text").value = data.extracted_text || "";
 
   if (data.document_type === "receipt") {
     document.getElementById("manual-receiver-name").value = data.receiver_name || "";
@@ -189,6 +221,19 @@ async function openEditDocument(documentId) {
   const data = await response.json();
   resetManualForm();
   setManualFields(data.document_type, "edit");
+  fillManualForm(data);
+  openModal("manual-modal");
+}
+
+async function openReviewDocument(documentId) {
+  const response = await fetch(`/api/v1/documents/${documentId}`, {
+    headers: authHeaders({ Accept: "application/json" }),
+  });
+  if (!response.ok) return;
+
+  const data = await response.json();
+  resetManualForm();
+  setManualFields(data.document_type, "review");
   fillManualForm(data);
   openModal("manual-modal");
 }
@@ -220,6 +265,12 @@ function initDocumentsTable() {
       params.set("start", data.start);
       params.set("length", data.length);
       params.set("search[value]", data.search?.value || "");
+      if (activeDocumentFilter.type) {
+        params.set("document_type", activeDocumentFilter.type);
+      }
+      if (activeDocumentFilter.status) {
+        params.set("status_filter", activeDocumentFilter.status);
+      }
 
       fetch(`/api/v1/documents/datatable?${params.toString()}`, {
         headers: authHeaders({ Accept: "application/json" }),
@@ -281,9 +332,14 @@ function initDocumentsTable() {
         data: "id",
         orderable: false,
         searchable: false,
-        render: function (data) {
+        render: function (data, _, row) {
+          const reviewButton =
+            row.entry_code === "ocr_ai" && row.status_code === "pending"
+              ? `<button class="document-review-btn rounded-full px-3 py-1 text-sm font-semibold text-[#3478f6]" data-document-id="${row.id}" title="Revisar">Revisar</button>`
+              : "";
           return `
             <div class="flex items-center gap-3 text-[#4f7af7]">
+              ${reviewButton}
               <button class="document-edit-btn" data-document-id="${data}" title="Editar"><i class="fa-solid fa-pen"></i></button>
               <button class="document-delete-btn text-[#e07a24]" data-document-id="${data}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -309,6 +365,10 @@ function initDocumentsTable() {
     openEditDocument(this.dataset.documentId);
   });
 
+  $("#documents-table").on("click", ".document-review-btn", function () {
+    openReviewDocument(this.dataset.documentId);
+  });
+
   $("#documents-table").on("click", ".document-delete-btn", function () {
     deleteDocument(this.dataset.documentId);
   });
@@ -329,7 +389,15 @@ async function submitManualForm(event) {
 
   const isEditing = Boolean(documentId);
   const requestPayload = isEditing
-    ? { ...payload, status: document.getElementById("manual-status").value }
+    ? {
+        ...payload,
+        status:
+          manualReviewAction === "approve"
+            ? "processed"
+            : manualReviewAction === "reject"
+              ? "cancelled"
+              : document.getElementById("manual-status").value,
+      }
     : payload;
   const response = await fetch(isEditing ? `/api/v1/documents/${documentId}` : "/api/v1/documents/manual", {
     method: isEditing ? "PUT" : "POST",
@@ -376,7 +444,12 @@ async function submitAutomaticForm(event) {
   });
 
   if (!response.ok) {
-    feedback.textContent = "Não foi possível enviar o documento.";
+    try {
+      const errorPayload = await response.json();
+      feedback.textContent = errorPayload.detail || "Não foi possível enviar o documento.";
+    } catch {
+      feedback.textContent = "Não foi possível enviar o documento.";
+    }
     return;
   }
 
@@ -402,6 +475,16 @@ document.getElementById("manual-draft-button")?.addEventListener("click", () => 
   lastManualAction = "draft";
 });
 
+document.getElementById("manual-review-approve-button")?.addEventListener("click", () => {
+  manualReviewAction = "approve";
+  document.getElementById("manual-document-form")?.requestSubmit();
+});
+
+document.getElementById("manual-review-reject-button")?.addEventListener("click", () => {
+  manualReviewAction = "reject";
+  document.getElementById("manual-document-form")?.requestSubmit();
+});
+
 document.getElementById("open-auto-modal")?.addEventListener("click", () => {
   document.getElementById("auto-form-feedback").textContent = "";
   openModal("auto-modal");
@@ -415,9 +498,20 @@ document.querySelectorAll("[data-close-modal]").forEach((button) => {
 
 document.getElementById("manual-document-form")?.addEventListener("submit", submitManualForm);
 document.getElementById("auto-document-form")?.addEventListener("submit", submitAutomaticForm);
+document.querySelectorAll(".document-filter-btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeDocumentFilter = {
+      type: button.getAttribute("data-doc-filter-type") || "",
+      status: button.getAttribute("data-doc-filter-status") || "",
+    };
+    updateDocumentFilterButtons();
+    documentsTable?.ajax.reload();
+  });
+});
 
 window.addEventListener("load", async () => {
   await loadClientsOptions();
+  updateDocumentFilterButtons();
   if (window.jQuery && $("#documents-table").length) {
     initDocumentsTable();
   }

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Relatório Consolidado</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      body {
+        margin: 0;
+        font-family: DejaVu Sans, sans-serif;
+        color: #22314d;
+        font-size: 11px;
+        background: linear-gradient(180deg, #2f5c95 0%, #214a7f 100%);
+      }
+
+      .page-shell {
+        position: relative;
+        overflow: hidden;
+        min-height: 100%;
+        padding: 12px;
+        border-radius: 28px;
+        background:
+          radial-gradient(circle at top right, rgba(118, 216, 255, 0.18), transparent 24%),
+          linear-gradient(180deg, rgba(47, 92, 149, 0.98) 0%, rgba(27, 65, 114, 1) 100%);
+      }
+
+      .page-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 44%;
+        background:
+          radial-gradient(circle at -10% 28%, transparent 0 63%, rgba(255, 255, 255, 0.18) 63.4%, transparent 64.1%),
+          radial-gradient(circle at -4% 36%, transparent 0 67%, rgba(118, 216, 255, 0.18) 67.3%, transparent 68%),
+          radial-gradient(circle at 8% 46%, transparent 0 71%, rgba(255, 255, 255, 0.12) 71.3%, transparent 72%);
+        pointer-events: none;
+      }
+
+      .page-shell::after {
+        content: "";
+        position: absolute;
+        right: -34px;
+        top: 28px;
+        width: 240px;
+        height: 240px;
+        border-radius: 40px;
+        background:
+          radial-gradient(circle at top, rgba(118, 216, 255, 0.2), transparent 56%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(12, 36, 73, 0.18) 100%);
+        transform: rotate(10deg);
+        pointer-events: none;
+      }
+
+      .report-shell {
+        position: relative;
+        z-index: 1;
+        border: 1px solid #d9e5f7;
+        border-radius: 24px;
+        padding: 22px 22px 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 252, 255, 1) 100%);
+        box-shadow: 0 18px 45px rgba(18, 52, 97, 0.08);
+      }
+
+      .report-header {
+        display: table;
+        width: 100%;
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e1ebf8;
+      }
+
+      .report-brand,
+      .report-meta {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      .report-meta {
+        width: 34%;
+        text-align: right;
+      }
+
+      .eyebrow {
+        color: #2e67c8;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 8px 0 4px;
+        font-size: 27px;
+        color: #163d73;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 17px;
+        color: #20304d;
+      }
+
+      p {
+        margin: 0;
+        line-height: 1.6;
+        color: #5f718f;
+      }
+
+      .summary-grid {
+        margin: 18px 0 12px;
+      }
+
+      .summary-card {
+        display: inline-block;
+        width: 23%;
+        margin-right: 2%;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+        border: 1px solid #e2eaf7;
+        border-radius: 18px;
+        padding: 14px 14px 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+      }
+
+      .summary-card:last-child {
+        margin-right: 0;
+      }
+
+      .summary-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #51607d;
+      }
+
+      .summary-value {
+        margin-top: 10px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #18233d;
+      }
+
+      .section {
+        margin-top: 22px;
+      }
+
+      .section-head {
+        margin-bottom: 8px;
+      }
+
+      .muted-note {
+        font-size: 10px;
+        color: #7283a0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #dde7f6;
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #edf2fa;
+        text-align: left;
+        vertical-align: top;
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      th {
+        background: #f4f8fe;
+        color: #7182a2;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .client-table th,
+      .client-table td {
+        font-size: 9.5px;
+      }
+
+      .client-table td {
+        padding: 7px 9px;
+      }
+
+      .footer {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid #e5ebf6;
+        font-size: 10px;
+        color: #7a88a3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="report-shell">
+        <div class="report-header">
+          <div class="report-brand">
+            <div class="eyebrow">Relatório do sistema</div>
+            <h1>{{ app_name }}</h1>
+            <p>Documento consolidado gerado diretamente pela plataforma com dados operacionais atuais.</p>
+          </div>
+          <div class="report-meta">
+            <div class="eyebrow">Emitido em</div>
+            <h2>{{ generated_at }}</h2>
+            <p>Relatório consolidado da dashboard</p>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Clientes</div>
+            <div class="summary-value">{{ summary.total_clients }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Contatos</div>
+            <div class="summary-value">{{ summary.total_contacts }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Documentos</div>
+            <div class="summary-value">{{ summary.total_documents }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Solicitações</div>
+            <div class="summary-value">{{ summary.total_requests }}</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="eyebrow">Clientes</div>
+            <h2>Base cadastrada</h2>
+          </div>
+          <table class="client-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>CNPJ</th>
+                <th>Status</th>
+                <th>Contato principal</th>
+                <th>Email</th>
+                <th>Telefone</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for client in clients %}
+              <tr>
+                <td>{{ client.name }}</td>
+                <td>{{ client.document_number }}</td>
+                <td>{{ client.status }}</td>
+                <td>{{ client.primary_contact_name }}{% if client.primary_contact_role != '-' %} - {{ client.primary_contact_role }}{% endif %}</td>
+                <td>{{ client.primary_contact_email }}</td>
+                <td>{{ client.primary_contact_phone }}</td>
+              </tr>
+              {% endfor %}
+              {% if not clients %}
+              <tr>
+                <td colspan="6">Nenhum cliente cadastrado.</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="eyebrow">Documentos</div>
+            <h2>Central Fiscal</h2>
+            <p class="muted-note">Registros consolidados do fluxo manual e do processamento com OCR + IA.</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Entrada</th>
+                <th>Status</th>
+                <th>Atualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for document in documents %}
+              <tr>
+                <td>{{ document.title }}</td>
+                <td>{{ document.client_name }}</td>
+                <td>{{ document.type }}</td>
+                <td>{{ document.entry_mode }}</td>
+                <td>{{ document.status }}</td>
+                <td>{{ document.updated_at }}</td>
+              </tr>
+              {% endfor %}
+              {% if not documents %}
+              <tr>
+                <td colspan="6">Nenhum documento registrado.</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          Relatório gerado automaticamente pelo sistema. Layout e conteúdo identificam a origem documental da plataforma.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

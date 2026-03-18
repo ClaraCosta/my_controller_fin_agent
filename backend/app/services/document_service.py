@@ -1,3 +1,5 @@
+import json
+import re
 from copy import deepcopy
 from pathlib import Path
 from uuid import uuid4
@@ -9,6 +11,8 @@ from backend.app.models.document import Document
 from backend.app.repositories.client_repository import ClientRepository
 from backend.app.repositories.document_repository import DocumentRepository
 from backend.app.schemas.document import DocumentUpdatePayload, ManualDocumentPayload
+from backend.app.services.ocr_service import OCRService
+from backend.app.services.ollama_service import OllamaService
 
 
 class DocumentService:
@@ -70,6 +74,8 @@ class DocumentService:
         self.db = db
         self.repository = DocumentRepository(db)
         self.client_repository = ClientRepository(db)
+        self.ocr_service = OCRService()
+        self.ollama_service = OllamaService()
 
     @classmethod
     def default_payload_for(cls, document_type: str) -> dict | None:
@@ -79,10 +85,23 @@ class DocumentService:
             return deepcopy(cls.DEFAULT_REC_PAYLOAD)
         return None
 
-    def get_datatable_page(self, start: int, length: int, search: str | None = None) -> dict:
+    def get_datatable_page(
+        self,
+        start: int,
+        length: int,
+        search: str | None = None,
+        document_type: str | None = None,
+        status: str | None = None,
+    ) -> dict:
         records_total = self.repository.count_all()
-        records_filtered = self.repository.count_filtered(search)
-        documents = self.repository.list_paginated(start=start, length=length, search=search)
+        records_filtered = self.repository.count_filtered(search, document_type=document_type, status=status)
+        documents = self.repository.list_paginated(
+            start=start,
+            length=length,
+            search=search,
+            document_type=document_type,
+            status=status,
+        )
 
         data = [
             {
@@ -92,6 +111,7 @@ class DocumentService:
                 "client": document.client.name if document.client else "-",
                 "type": self.TYPE_LABELS.get(document.document_type, document.document_type),
                 "entry": self.ENTRY_LABELS.get(document.entry_mode, document.entry_mode),
+                "entry_code": document.entry_mode,
                 "status": self.STATUS_LABELS.get(document.status, document.status),
                 "status_code": document.status,
                 "updated_at": document.updated_at.strftime("%d/%m/%Y") if document.updated_at else "-",
@@ -134,6 +154,9 @@ class DocumentService:
         contents = await file.read()
         destination.write_bytes(contents)
 
+        extracted_text = self._extract_text(str(destination))
+        parsed_payload = self._extract_structured_payload(expected_type, extracted_text)
+
         document = Document(
             client_id=client_id,
             document_type=expected_type,
@@ -142,9 +165,9 @@ class DocumentService:
             file_name=file.filename,
             file_path=str(destination),
             mime_type=file.content_type,
-            extracted_text=None,
-            json_nfe=self.default_payload_for("nfe") if expected_type == "nfe" else None,
-            json_rec=self.default_payload_for("receipt") if expected_type == "receipt" else None,
+            extracted_text=extracted_text,
+            json_nfe=parsed_payload if expected_type == "nfe" else None,
+            json_rec=parsed_payload if expected_type == "receipt" else None,
         )
 
         if notes:
@@ -185,6 +208,7 @@ class DocumentService:
             "entry_mode": document.entry_mode,
             "status": document.status,
             "file_name": document.file_name,
+            "extracted_text": document.extracted_text or "",
         }
         if document.document_type == "nfe":
             return {
@@ -262,3 +286,60 @@ class DocumentService:
         data["valor"] = payload.amount or 0
         data["forma_pagamento"] = payload.payment_method or ""
         return data
+
+    def _extract_text(self, file_path: str) -> str:
+        try:
+            return self.ocr_service.extract_text(file_path)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Não foi possível ler o documento com OCR: {exc}",
+            ) from exc
+
+    def _extract_structured_payload(self, document_type: str, extracted_text: str) -> dict:
+        default_payload = self.default_payload_for(document_type)
+        if default_payload is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tipo de documento inválido.")
+        if not extracted_text.strip():
+            return default_payload
+
+        prompt = self._build_extraction_prompt(document_type=document_type, extracted_text=extracted_text)
+        response = self.ollama_service.generate(prompt)
+        parsed = self._parse_json_response(response)
+        if not isinstance(parsed, dict):
+            return default_payload
+        return self._merge_with_default(default_payload, parsed)
+
+    def _build_extraction_prompt(self, document_type: str, extracted_text: str) -> str:
+        prompt_path = Path("backend/app/prompts/document_extraction_prompt.txt")
+        template = prompt_path.read_text(encoding="utf-8")
+        return (
+            template.replace("{{document_type}}", document_type)
+            .replace("{{json_schema}}", json.dumps(self.default_payload_for(document_type), ensure_ascii=False, indent=2))
+            .replace("{{ocr_text}}", extracted_text[:12000])
+        )
+
+    def _parse_json_response(self, response: str) -> dict | None:
+        if not response.strip():
+            return None
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            match = re.search(r"\{.*\}", response, re.DOTALL)
+            if not match:
+                return None
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                return None
+
+    def _merge_with_default(self, default_payload: dict, parsed_payload: dict) -> dict:
+        merged = deepcopy(default_payload)
+        for key, value in parsed_payload.items():
+            if key not in merged:
+                continue
+            if isinstance(merged[key], dict) and isinstance(value, dict):
+                merged[key] = self._merge_with_default(merged[key], value)
+            else:
+                merged[key] = value
+        return merged

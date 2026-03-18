@@ -11,6 +11,14 @@ RUN apt-get update \
         build-essential \
         curl \
         libpq-dev \
+        libcairo2 \
+        libffi-dev \
+        libgdk-pixbuf-2.0-0 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libpangoft2-1.0-0 \
+        poppler-utils \
+        shared-mime-info \
         tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 

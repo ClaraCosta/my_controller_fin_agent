@@ -15,10 +15,18 @@ def documents_datatable(
     start: int = Query(0),
     length: int = Query(10),
     search_value: str = Query("", alias="search[value]"),
+    document_type: str | None = Query(None),
+    status_filter: str | None = Query(None),
     db: Session = Depends(get_db),
     _=Depends(AuthService.get_current_user),
 ):
-    page = DocumentService(db).get_datatable_page(start=start, length=length, search=search_value or None)
+    page = DocumentService(db).get_datatable_page(
+        start=start,
+        length=length,
+        search=search_value or None,
+        document_type=document_type or None,
+        status=status_filter or None,
+    )
     return {
         "draw": draw,
         **page,

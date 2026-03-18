@@ -47,11 +47,15 @@
         <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#8ea8d1]">Principal</p>
         <nav class="space-y-2 text-sm">
           <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/dashboard' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/dashboard">
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/dashboard' %}bg-white/20 text-sm font-bold{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">D</span>
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/dashboard' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">
+              <i class="fa-solid fa-chart-line"></i>
+            </span>
             Dashboard
           </a>
           <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/chat' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/chat">
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/chat' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">AI</span>
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/chat' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">
+              <i class="fa-solid fa-robot"></i>
+            </span>
             Chat
           </a>
           <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/central-fiscal' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/central-fiscal">

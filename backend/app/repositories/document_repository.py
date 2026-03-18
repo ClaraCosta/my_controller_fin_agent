@@ -7,6 +7,24 @@ from backend.app.repositories.base import BaseRepository
 
 
 class DocumentRepository(BaseRepository):
+    def _apply_filters(self, stmt, search: str | None = None, document_type: str | None = None, status: str | None = None):
+        if search:
+            term = f"%{search.lower()}%"
+            stmt = stmt.where(
+                or_(
+                    func.lower(Client.name).like(term),
+                    func.lower(Document.document_type).like(term),
+                    func.lower(Document.entry_mode).like(term),
+                    func.lower(Document.status).like(term),
+                    func.lower(func.coalesce(Document.file_name, "")).like(term),
+                )
+            )
+        if document_type:
+            stmt = stmt.where(Document.document_type == document_type)
+        if status:
+            stmt = stmt.where(Document.status == status)
+        return stmt
+
     def list_all(self) -> list[Document]:
         stmt = (
             select(Document)
@@ -15,7 +33,14 @@ class DocumentRepository(BaseRepository):
         )
         return list(self.db.scalars(stmt))
 
-    def list_paginated(self, start: int, length: int, search: str | None = None) -> list[Document]:
+    def list_paginated(
+        self,
+        start: int,
+        length: int,
+        search: str | None = None,
+        document_type: str | None = None,
+        status: str | None = None,
+    ) -> list[Document]:
         stmt = (
             select(Document)
             .join(Client)
@@ -24,35 +49,20 @@ class DocumentRepository(BaseRepository):
             .offset(start)
             .limit(length)
         )
-        if search:
-            term = f"%{search.lower()}%"
-            stmt = stmt.where(
-                or_(
-                    func.lower(Client.name).like(term),
-                    func.lower(Document.document_type).like(term),
-                    func.lower(Document.entry_mode).like(term),
-                    func.lower(Document.status).like(term),
-                    func.lower(func.coalesce(Document.file_name, "")).like(term),
-                )
-            )
+        stmt = self._apply_filters(stmt, search=search, document_type=document_type, status=status)
         return list(self.db.scalars(stmt))
 
     def count_all(self) -> int:
         return self.db.scalar(select(func.count(Document.id))) or 0
 
-    def count_filtered(self, search: str | None = None) -> int:
+    def count_filtered(
+        self,
+        search: str | None = None,
+        document_type: str | None = None,
+        status: str | None = None,
+    ) -> int:
         stmt = select(func.count(Document.id)).select_from(Document).join(Client)
-        if search:
-            term = f"%{search.lower()}%"
-            stmt = stmt.where(
-                or_(
-                    func.lower(Client.name).like(term),
-                    func.lower(Document.document_type).like(term),
-                    func.lower(Document.entry_mode).like(term),
-                    func.lower(Document.status).like(term),
-                    func.lower(func.coalesce(Document.file_name, "")).like(term),
-                )
-            )
+        stmt = self._apply_filters(stmt, search=search, document_type=document_type, status=status)
         return self.db.scalar(stmt) or 0
 
     def get_by_id(self, document_id: int) -> Document | None:

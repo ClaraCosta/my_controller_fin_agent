@@ -335,6 +335,33 @@ async function handleDashboardChat(event) {
   redirectToCentralChat(message);
 }
 
+async function downloadConsolidatedReport() {
+  const button = document.getElementById("download-consolidated-report");
+  const originalText = button?.textContent;
+  if (button) button.textContent = "Gerando PDF...";
+
+  const response = await fetch("/api/v1/reports/consolidated.pdf", {
+    headers: authHeaders({ Accept: "application/pdf" }),
+  });
+
+  if (!response.ok) {
+    if (button && originalText) button.textContent = originalText;
+    return;
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "relatorio-consolidado.pdf";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+
+  if (button && originalText) button.textContent = originalText;
+}
+
 async function submitClientForm(event) {
   event.preventDefault();
   const feedback = document.getElementById("client-form-feedback");
@@ -380,6 +407,7 @@ async function submitClientForm(event) {
 loadDashboard();
 attachClientDocumentMask();
 document.getElementById("dashboard-chat-form")?.addEventListener("submit", handleDashboardChat);
+document.getElementById("download-consolidated-report")?.addEventListener("click", downloadConsolidatedReport);
 document.getElementById("client-form")?.addEventListener("submit", submitClientForm);
 document.getElementById("open-client-modal")?.addEventListener("click", () => {
   resetClientForm();

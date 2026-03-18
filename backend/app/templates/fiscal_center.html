@@ -130,11 +130,17 @@
           <option value="cancelled">Cancelado</option>
         </select>
       </label>
+      <label id="manual-ocr-text-wrap" class="hidden block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Texto extraído via OCR</span>
+        <textarea id="manual-ocr-text" readonly class="min-h-36 w-full rounded-2xl border border-[#dce5f4] bg-[#f8fbff] px-4 py-3 text-sm text-[#5f6f8c]"></textarea>
+      </label>
       <div id="manual-extra-fields" class="grid gap-4 md:col-span-2 md:grid-cols-2"></div>
       <p id="manual-form-feedback" class="md:col-span-2 min-h-6 text-sm text-[#5f6f8c]"></p>
       <div class="md:col-span-2 flex flex-wrap justify-end gap-3 pt-2">
         <button type="button" data-close-modal="manual-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
         <button id="manual-draft-button" type="submit" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Salvar rascunho</button>
+        <button id="manual-review-reject-button" type="button" class="hidden rounded-2xl border border-[#f4d4cb] bg-[#fff4f1] px-5 py-3 text-sm font-semibold text-[#d96b4a]">Reprovar</button>
+        <button id="manual-review-approve-button" type="button" class="hidden rounded-2xl border border-[#cfeadf] bg-[#eefaf4] px-5 py-3 text-sm font-semibold text-[#16925f]">Aprovar</button>
         <button id="manual-process-button" type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Processar manualmente</button>
       </div>
     </form>
