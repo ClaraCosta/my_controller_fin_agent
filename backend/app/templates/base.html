@@ -126,6 +126,69 @@
         </footer>
       </main>
     </div>
+
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+      <div class="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-shell">
+        <div class="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Perfil</p>
+            <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Minhas informações</h3>
+          </div>
+          <button type="button" data-close-global-modal="profile-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="profile-form" class="grid gap-4">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-[#51607d]">Nome completo</span>
+            <input id="profile-full-name" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Seu nome" />
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-[#51607d]">E-mail</span>
+            <input id="profile-email" type="email" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="seuemail@empresa.com" />
+          </label>
+          <p id="profile-form-feedback" class="min-h-6 text-sm text-[#5f6f8c]"></p>
+          <div class="flex flex-wrap justify-end gap-3 pt-2">
+            <button type="button" data-close-global-modal="profile-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+            <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Salvar alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="account-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+      <div class="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-shell">
+        <div class="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Conta</p>
+            <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Minha conta</h3>
+          </div>
+          <button type="button" data-close-global-modal="account-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="password-form" class="grid gap-4">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-[#51607d]">Senha atual</span>
+            <input id="account-current-password" type="password" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Digite sua senha atual" />
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-[#51607d]">Nova senha</span>
+            <input id="account-new-password" type="password" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Digite a nova senha" />
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-[#51607d]">Confirmar nova senha</span>
+            <input id="account-confirm-password" type="password" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Repita a nova senha" />
+          </label>
+          <p id="password-form-feedback" class="min-h-6 text-sm text-[#5f6f8c]"></p>
+          <div class="flex flex-wrap justify-end gap-3 pt-2">
+            <button type="button" data-close-global-modal="account-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+            <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Atualizar senha</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
     {% block scripts %}{% endblock %}
   </body>

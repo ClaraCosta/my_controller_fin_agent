@@ -33,6 +33,16 @@ class DocumentRepository(BaseRepository):
         )
         return list(self.db.scalars(stmt))
 
+    def search_text(self, query: str) -> list[Document]:
+        stmt = (
+            select(Document)
+            .join(Client)
+            .options(selectinload(Document.client))
+            .order_by(Document.updated_at.desc(), Document.id.desc())
+        )
+        stmt = self._apply_filters(stmt, search=query)
+        return list(self.db.scalars(stmt))
+
     def list_paginated(
         self,
         start: int,

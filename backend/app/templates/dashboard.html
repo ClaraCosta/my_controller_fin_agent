@@ -2,8 +2,8 @@
 {% block content %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
 <section class="space-y-8">
-  <section class="rounded-[2rem] bg-white p-6 shadow-shell">
-    <div class="mb-5 flex items-center justify-between">
+  <section class="space-y-5">
+    <div class="flex items-center justify-between">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Resumo</p>
         <h3 class="mt-1 text-3xl font-extrabold tracking-tight text-[#18233d]">Visao geral da operacao</h3>
@@ -15,43 +15,32 @@
         </button>
       </div>
     </div>
-    <div class="grid items-stretch gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-      <div id="dashboard-cards" class="grid auto-rows-fr gap-4 md:grid-cols-2"></div>
-      <article class="flex h-full flex-col rounded-[1.8rem] border border-[#e6ebf4] bg-white p-5 shadow-sm">
-        <div class="mb-6 flex items-start justify-between gap-4">
+    <div id="dashboard-cards" class="dashboard-metrics-grid grid gap-4 lg:grid-cols-3"></div>
+    <div class="dashboard-analytics-grid mt-5 grid items-stretch gap-5 lg:grid-cols-3">
+      <article class="dashboard-panel-card flex h-full flex-col rounded-[1.8rem] border border-[#e6ebf4] bg-white p-5">
+        <div class="mb-5 flex items-start justify-between gap-4">
           <div>
             <p class="text-base font-semibold text-[#25324d]">Desempenho operacional</p>
-            <div class="mt-3 flex items-center gap-3">
-              <span class="text-4xl font-black tracking-tight text-[#18233d]">75%</span>
-              <span class="rounded-xl bg-[#5b7df6] px-3 py-2 text-sm font-semibold text-white">▼ 2.8%</span>
-            </div>
-            <p class="mt-3 text-sm leading-6 text-[#66748f]">Resumo visual da atividade do workspace entre cadastros, solicitações e processamento documental.</p>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-[#66748f]">Evolução real dos principais registros da plataforma nos últimos meses, com base nos dados já cadastrados no sistema.</p>
           </div>
-          <div class="rounded-2xl border border-[#e6ebf4] px-4 py-3 text-sm font-medium text-[#5f6f8c]">2025</div>
+          <div class="rounded-2xl border border-[#e6ebf4] px-4 py-3 text-sm font-medium text-[#5f6f8c]">Últimos 6 meses</div>
         </div>
-        <div class="relative mt-1 min-h-[21.5rem] flex-1 overflow-hidden rounded-[1.5rem] bg-[#fbfcff] p-4">
-          <div class="absolute inset-x-4 top-4 bottom-4 flex flex-col justify-between text-xs text-[#9aa7c0]">
-            <div class="border-b border-dashed border-[#e3e9f4] pb-2">5k</div>
-            <div class="border-b border-dashed border-[#e3e9f4] pb-2">4k</div>
-            <div class="border-b border-dashed border-[#e3e9f4] pb-2">3k</div>
-            <div class="border-b border-dashed border-[#e3e9f4] pb-2">2k</div>
-            <div class="border-b border-dashed border-[#e3e9f4] pb-2">1k</div>
-            <div>0</div>
+        <div class="dashboard-chart-card flex-1 rounded-[1.5rem] bg-[#fbfcff] p-3">
+          <div id="dashboard-main-chart" class="h-[23rem]"></div>
+        </div>
+      </article>
+      <article class="dashboard-panel-card flex h-full flex-col rounded-[1.8rem] border border-[#e6ebf4] bg-white p-5">
+        <div class="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-base font-semibold text-[#25324d]">Central Fiscal</p>
+            <p class="mt-2 text-sm leading-6 text-[#66748f]">Distribuição atual dos documentos por status, ajudando a visualizar o que já foi processado e o que ainda depende de ação.</p>
           </div>
-          <svg class="absolute inset-x-10 bottom-10 top-6 w-[calc(100%-5rem)]" viewBox="0 0 760 280" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 280C50 280 90 220 130 210C180 197 210 150 255 145C315 138 350 245 395 248C455 252 470 110 535 95C605 79 640 190 700 205C725 211 740 212 760 208V280H0Z" fill="#6A8DF9" fill-opacity="0.86"/>
-            <path d="M0 280C45 275 80 150 140 135C188 122 218 170 270 176C330 183 355 80 418 70C485 59 520 170 575 188C635 208 700 210 760 198V280H0Z" fill="#52B7F6" fill-opacity="0.82"/>
-            <path d="M0 280C40 260 95 205 145 198C197 191 225 150 275 146C335 141 370 92 430 86C492 80 530 140 580 162C642 189 705 230 760 240V280H0Z" fill="#9EA7BA" fill-opacity="0.72"/>
-          </svg>
-          <div class="absolute inset-x-10 bottom-2 flex justify-between text-xs text-[#9aa7c0]">
-            <span>Jan</span>
-            <span>Fev</span>
-            <span>Mar</span>
-            <span>Abr</span>
-            <span>Mai</span>
-            <span>Jun</span>
-            <span>Jul</span>
-          </div>
+          <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef4ff] text-[#3478f6]">
+            <i class="fa-solid fa-chart-pie"></i>
+          </span>
+        </div>
+        <div class="dashboard-chart-card rounded-[1.5rem] bg-[#fbfcff] p-3">
+          <div id="dashboard-donut-chart" class="h-[23rem]"></div>
         </div>
       </article>
     </div>
@@ -177,5 +166,6 @@
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="/static/js/dashboard.js"></script>
 {% endblock %}

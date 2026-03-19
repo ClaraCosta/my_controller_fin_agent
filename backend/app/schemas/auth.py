@@ -19,3 +19,16 @@ class UserRead(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class UserProfileUpdateRequest(BaseModel):
+    full_name: str
+    email: EmailStr
+
+
+class UserPasswordUpdateRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    message: str

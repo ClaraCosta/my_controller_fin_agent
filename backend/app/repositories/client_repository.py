@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
 from backend.app.models.client import Client
@@ -16,10 +16,20 @@ class ClientRepository(BaseRepository):
         return self.db.scalar(statement)
 
     def search_by_name(self, query: str) -> list[Client]:
+        return self.search_text(query)
+
+    def search_text(self, query: str) -> list[Client]:
+        term = f"%{query}%"
         statement = (
             select(Client)
             .options(selectinload(Client.contacts))
-            .where(Client.name.ilike(f"%{query}%"))
+            .where(
+                or_(
+                    Client.name.ilike(term),
+                    Client.document_number.ilike(term),
+                    Client.status.ilike(term),
+                )
+            )
             .order_by(Client.name)
         )
         return list(self.db.scalars(statement))

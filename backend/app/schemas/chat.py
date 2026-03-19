@@ -6,6 +6,11 @@ class ChatMessageRequest(BaseModel):
     session_id: int | None = None
 
 
+class ChatHistoryItem(BaseModel):
+    role: str
+    content: str
+
+
 class StructuredAnswer(BaseModel):
     summary: str
     data_points: list[str]
@@ -16,3 +21,7 @@ class ChatMessageResponse(BaseModel):
     session_id: int
     answer: StructuredAnswer
 
+
+class ChatSessionStateResponse(BaseModel):
+    session_id: int | None = None
+    messages: list[ChatHistoryItem]

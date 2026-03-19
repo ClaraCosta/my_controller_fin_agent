@@ -5,6 +5,14 @@ from backend.app.repositories.base import BaseRepository
 
 
 class ChatRepository(BaseRepository):
+    def get_latest_session(self, user_id: int) -> ChatSession | None:
+        statement = (
+            select(ChatSession)
+            .where(ChatSession.user_id == user_id)
+            .order_by(ChatSession.updated_at.desc(), ChatSession.id.desc())
+        )
+        return self.db.scalar(statement)
+
     def get_or_create_session(self, user_id: int, session_id: int | None) -> ChatSession:
         if session_id:
             session = self.db.scalar(select(ChatSession).where(ChatSession.id == session_id, ChatSession.user_id == user_id))
@@ -30,3 +38,10 @@ class ChatRepository(BaseRepository):
         )
         return list(reversed(list(self.db.scalars(statement))))
 
+    def list_messages(self, session_id: int) -> list[ChatMessage]:
+        statement = (
+            select(ChatMessage)
+            .where(ChatMessage.session_id == session_id)
+            .order_by(ChatMessage.created_at.asc(), ChatMessage.id.asc())
+        )
+        return list(self.db.scalars(statement))

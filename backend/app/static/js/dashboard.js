@@ -5,6 +5,8 @@ function redirectToCentralChat(message) {
 }
 
 let clientsTable = null;
+let mainDashboardChart = null;
+let donutDashboardChart = null;
 
 function openModal(id) {
   const modal = document.getElementById(id);
@@ -112,13 +114,11 @@ async function loadDashboard() {
       accent: "linear-gradient(135deg, #ffffff, #f8fbff)",
       icon: "fa-solid fa-user",
       color: "#3478f6",
-      description: "Base ativa cadastrada no workspace",
       helper: "Carteira principal",
-      trend: "+12%",
+      trend: `${Math.max(0, data.total_clients)} total`,
       trendTone: "bg-[#eaf2ff] text-[#3478f6]",
-      footerLabel: "Novos este mes",
-      footerValue: Math.max(2, Math.ceil(data.total_clients * 0.18)),
-      layout: "dashboard-stat-card-wide",
+      footerLabel: "Base ativa",
+      footerValue: Math.max(0, data.total_clients),
       chart: [34, 22, 58, 41, 73, 52, 64],
     },
     {
@@ -127,13 +127,11 @@ async function loadDashboard() {
       accent: "linear-gradient(135deg, #ffffff, #fff9f7)",
       icon: "fa-solid fa-address-book",
       color: "#ff7a59",
-      description: "Relacionamentos prontos para acionamento",
       helper: "Rede operacional",
-      trend: "+8%",
+      trend: `${Math.max(0, data.total_contacts)} total`,
       trendTone: "bg-[#fff0ea] text-[#ff7a59]",
-      footerLabel: "Com telefone",
-      footerValue: Math.max(1, Math.ceil(data.total_contacts * 0.74)),
-      layout: "dashboard-stat-card-compact",
+      footerLabel: "Cobertura atual",
+      footerValue: Math.max(0, data.total_contacts),
       chart: [16, 28, 24, 37, 32, 44],
     },
     {
@@ -142,13 +140,11 @@ async function loadDashboard() {
       accent: "linear-gradient(135deg, #ffffff, #f6f8ff)",
       icon: "fa-solid fa-folder-open",
       color: "#3478f6",
-      description: "Demandas que movimentam a operação",
       helper: "Fluxo de atendimento",
-      trend: "Em foco",
+      trend: `${Math.max(0, data.total_requests)} total`,
       trendTone: "bg-[#edf3ff] text-[#476be8]",
-      footerLabel: "Em andamento",
-      footerValue: Math.max(1, Math.ceil(data.total_requests * 0.45)),
-      layout: "dashboard-stat-card-compact",
+      footerLabel: "Volume operacional",
+      footerValue: Math.max(0, data.total_requests),
       chart: [20, 36, 29, 52, 39, 46],
     },
   ];
@@ -157,13 +153,12 @@ async function loadDashboard() {
   container.innerHTML = cards
     .map(
       (card) => `
-        <article class="dashboard-stat-card ${card.layout} flex h-full flex-col rounded-[1.8rem] border border-[#e6ebf4] p-5 shadow-sm" style="background: ${card.accent}; --stat-color: ${card.color};">
+        <article class="dashboard-stat-card flex h-full min-h-[18rem] flex-col rounded-[1.8rem] border border-[#e6ebf4] p-5 shadow-sm" style="background: ${card.accent}; --stat-color: ${card.color};">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-sm font-semibold text-[#51607d]">${card.label}</p>
-              <p class="mt-2 text-sm leading-6 text-[#72809d]">${card.description}</p>
             </div>
-            <span class="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[1.5rem]" style="background: ${card.color}18; color: ${card.color};">
+            <span class="flex h-[0.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[1.5rem]" style="background: ${card.color}18; color: ${card.color};">
               <i class="${card.icon} text-[2rem]"></i>
             </span>
           </div>
@@ -198,6 +193,139 @@ async function loadDashboard() {
       `
     )
     .join("");
+
+  renderDashboardCharts(data);
+}
+
+function renderDashboardCharts(data) {
+  const mainChartElement = document.getElementById("dashboard-main-chart");
+  const donutChartElement = document.getElementById("dashboard-donut-chart");
+
+  if (mainDashboardChart) {
+    mainDashboardChart.destroy();
+  }
+  if (donutDashboardChart) {
+    donutDashboardChart.destroy();
+  }
+
+  if (window.ApexCharts && mainChartElement) {
+    mainDashboardChart = new ApexCharts(mainChartElement, {
+      chart: {
+        type: "area",
+        height: 360,
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        fontFamily: "Segoe UI, sans-serif",
+      },
+      colors: ["#3478f6", "#52b7f6", "#6c5ce7", "#ff7a59"],
+      series: data.trend_series,
+      stroke: {
+        curve: "smooth",
+        width: 3,
+      },
+      fill: {
+        type: "gradient",
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.28,
+          opacityTo: 0.04,
+          stops: [0, 95, 100],
+        },
+      },
+      dataLabels: { enabled: false },
+      legend: {
+        position: "top",
+        horizontalAlign: "left",
+        labels: { colors: "#60708d" },
+      },
+      grid: {
+        borderColor: "#e7edf8",
+        strokeDashArray: 5,
+      },
+      xaxis: {
+        categories: data.trend_labels,
+        labels: { style: { colors: "#8a98b1", fontSize: "12px" } },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+      },
+      yaxis: {
+        min: 0,
+        forceNiceScale: true,
+        labels: { style: { colors: "#8a98b1", fontSize: "12px" } },
+      },
+      tooltip: {
+        theme: "light",
+        x: { show: true },
+      },
+    });
+    mainDashboardChart.render();
+  }
+
+  if (window.ApexCharts && donutChartElement) {
+    donutDashboardChart = new ApexCharts(donutChartElement, {
+      chart: {
+        type: "donut",
+        height: 360,
+        fontFamily: "Segoe UI, sans-serif",
+      },
+      series: data.donut_metrics.map((item) => item.value),
+      labels: data.donut_metrics.map((item) => item.label),
+      colors: ["#3478f6", "#ffb648", "#7c8ba4", "#ff7a59"],
+      dataLabels: {
+        enabled: false,
+      },
+      legend: {
+        position: "bottom",
+        fontSize: "13px",
+        labels: { colors: "#60708d" },
+        itemMargin: { horizontal: 12, vertical: 6 },
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: "68%",
+            labels: {
+              show: true,
+              name: {
+                show: true,
+                color: "#8a98b1",
+                offsetY: 16,
+              },
+              value: {
+                show: true,
+                fontSize: "34px",
+                fontWeight: 800,
+                color: "#1f2a44",
+                offsetY: -10,
+                formatter: function (value) {
+                  return String(value);
+                },
+              },
+              total: {
+                show: true,
+                label: "Documentos",
+                color: "#60708d",
+                formatter: function (w) {
+                  return String(w.globals.seriesTotals.reduce((acc, current) => acc + current, 0));
+                },
+              },
+            },
+          },
+        },
+      },
+      stroke: {
+        width: 0,
+      },
+      tooltip: {
+        y: {
+          formatter: function (value) {
+            return `${value} registro(s)`;
+          },
+        },
+      },
+    });
+    donutDashboardChart.render();
+  }
 }
 
 function initClientsTable() {
