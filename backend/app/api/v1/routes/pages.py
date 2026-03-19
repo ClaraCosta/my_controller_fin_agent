@@ -24,3 +24,8 @@ def chat_page(request: Request):
 @router.get("/central-fiscal", response_class=HTMLResponse)
 def fiscal_center_page(request: Request):
     return templates.TemplateResponse("fiscal_center.html", {"request": request})
+
+
+@router.get("/central-clientes", response_class=HTMLResponse)
+def clients_center_page(request: Request):
+    return templates.TemplateResponse("clients_center.html", {"request": request})

@@ -2,6 +2,41 @@ let documentsTable = null;
 let lastManualAction = "processed";
 let activeDocumentFilter = { type: "", status: "" };
 let manualReviewAction = null;
+let fiscalToastTimer = null;
+
+function hideFiscalToast() {
+  const toast = document.getElementById("fiscal-toast");
+  if (!toast) return;
+
+  if (fiscalToastTimer) {
+    window.clearTimeout(fiscalToastTimer);
+    fiscalToastTimer = null;
+  }
+
+  toast.classList.remove("opacity-100");
+  toast.classList.add("opacity-0");
+  window.setTimeout(() => {
+    toast.classList.remove("flex");
+    toast.classList.add("hidden");
+  }, 300);
+}
+
+function formatCpfOrCnpj(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+
+  if (digits.length <= 11) {
+    return digits
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2");
+  }
+
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
 
 function openModal(id) {
   const modal = document.getElementById(id);
@@ -15,6 +50,67 @@ function closeModal(id) {
   if (!modal) return;
   modal.classList.add("hidden");
   modal.classList.remove("flex");
+}
+
+function showFiscalToast(message, tone = "success") {
+  const toast = document.getElementById("fiscal-toast");
+  const toastCard = document.getElementById("fiscal-toast-card");
+  const toastIcon = document.getElementById("fiscal-toast-icon");
+  const toastTitle = document.getElementById("fiscal-toast-title");
+  const toastMessage = document.getElementById("fiscal-toast-message");
+
+  if (!toast || !toastCard || !toastIcon || !toastTitle || !toastMessage) return;
+
+  const variants = {
+    success: {
+      title: "Sucesso",
+      card: "border-[#d7e5ff] bg-white",
+      icon: "bg-[#edf4ff] text-[#3478f6]",
+      symbol: "fa-solid fa-circle-check",
+    },
+    error: {
+      title: "Erro",
+      card: "border-[#ffd8d1] bg-white",
+      icon: "bg-[#fff1ee] text-[#dd6b4d]",
+      symbol: "fa-solid fa-circle-exclamation",
+    },
+  };
+
+  const selected = variants[tone] || variants.success;
+
+  toastTitle.textContent = selected.title;
+  toastMessage.textContent = message;
+  toastCard.className = `flex w-full max-w-2xl items-start gap-4 rounded-[2rem] border px-7 py-6 shadow-[0_28px_80px_rgba(31,42,68,0.22)] ${selected.card}`;
+  toastIcon.className = `mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] text-[1.2rem] ${selected.icon}`;
+  toastIcon.innerHTML = `<i class="${selected.symbol}"></i>`;
+
+  if (fiscalToastTimer) {
+    window.clearTimeout(fiscalToastTimer);
+  }
+
+  toast.classList.remove("hidden", "opacity-0");
+  toast.classList.add("flex", "opacity-100");
+
+  fiscalToastTimer = window.setTimeout(() => {
+    hideFiscalToast();
+  }, 4200);
+}
+
+function attachFiscalDocumentMasks() {
+  [
+    "manual-receiver-document",
+    "manual-payer-document",
+    "manual-issuer-document",
+    "manual-recipient-document",
+  ].forEach((fieldId) => {
+    const input = document.getElementById(fieldId);
+    if (!input || input.dataset.maskBound === "true") return;
+
+    input.dataset.maskBound = "true";
+    input.addEventListener("input", () => {
+      input.value = formatCpfOrCnpj(input.value);
+    });
+  });
 }
 
 function updateDocumentFilterButtons() {
@@ -65,7 +161,7 @@ function resetManualForm() {
   document.getElementById("manual-status-wrap").classList.add("hidden");
   document.getElementById("manual-ocr-text-wrap").classList.add("hidden");
   document.getElementById("manual-status").value = "processed";
-  document.getElementById("manual-ocr-text").value = "";
+  document.getElementById("manual-ocr-text").textContent = "";
   document.getElementById("manual-form-feedback").textContent = "";
   document.getElementById("manual-review-approve-button").classList.add("hidden");
   document.getElementById("manual-review-reject-button").classList.add("hidden");
@@ -150,6 +246,8 @@ function setManualFields(type, mode = "create") {
       </label>
     `;
   }
+
+  attachFiscalDocumentMasks();
 }
 
 function getManualPayload() {
@@ -194,7 +292,7 @@ function fillManualForm(data) {
   document.getElementById("manual-amount").value = data.amount || "";
   document.getElementById("manual-description").value = data.description || "";
   document.getElementById("manual-status").value = data.status || "processed";
-  document.getElementById("manual-ocr-text").value = data.extracted_text || "";
+  document.getElementById("manual-ocr-text").textContent = data.ocr_review_message || data.extracted_text || "";
 
   if (data.document_type === "receipt") {
     document.getElementById("manual-receiver-name").value = data.receiver_name || "";
@@ -239,7 +337,13 @@ async function openReviewDocument(documentId) {
 }
 
 async function deleteDocument(documentId) {
-  const confirmed = window.confirm("Deseja realmente excluir este documento?");
+  const confirmed = await window.showSystemConfirm?.({
+    titleText: "Excluir documento",
+    messageText: "Deseja realmente excluir este documento? Essa ação remove o registro da Central Fiscal.",
+    confirmText: "Excluir documento",
+    cancelText: "Cancelar",
+    tone: "danger",
+  });
   if (!confirmed) return;
 
   const response = await fetch(`/api/v1/documents/${documentId}`, {
@@ -248,7 +352,10 @@ async function deleteDocument(documentId) {
   });
 
   if (response.ok) {
+    showFiscalToast("Documento excluído com sucesso.");
     documentsTable?.ajax.reload(null, false);
+  } else {
+    showFiscalToast("Não foi possível excluir o documento.", "error");
   }
 }
 
@@ -321,6 +428,7 @@ function initDocumentsTable() {
           const tones = {
             processed: "bg-[#e9fbf2] text-[#16a765]",
             pending: "bg-[#fff3ea] text-[#e07a24]",
+            unidentified: "bg-[#fff1ee] text-[#dd6b4d]",
             draft: "bg-[#eef3ff] text-[#476be8]",
             cancelled: "bg-[#f4f5f8] text-[#6b7280]",
           };
@@ -334,7 +442,7 @@ function initDocumentsTable() {
         searchable: false,
         render: function (data, _, row) {
           const reviewButton =
-            row.entry_code === "ocr_ai" && row.status_code === "pending"
+            row.entry_code === "ocr_ai" && ["pending", "unidentified"].includes(row.status_code)
               ? `<button class="document-review-btn rounded-full px-3 py-1 text-sm font-semibold text-[#3478f6]" data-document-id="${row.id}" title="Revisar">Revisar</button>`
               : "";
           return `
@@ -379,6 +487,7 @@ async function submitManualForm(event) {
   const feedback = document.getElementById("manual-form-feedback");
   const documentId = document.getElementById("manual-document-id").value;
   const payload = getManualPayload();
+  const documentLabel = payload.document_type === "nfe" ? "A nota fiscal" : "O recibo";
 
   if (!payload.client_id) {
     feedback.textContent = "Selecione um cliente antes de salvar.";
@@ -386,7 +495,6 @@ async function submitManualForm(event) {
   }
 
   feedback.textContent = "Salvando documento...";
-
   const isEditing = Boolean(documentId);
   const requestPayload = isEditing
     ? {
@@ -399,6 +507,21 @@ async function submitManualForm(event) {
               : document.getElementById("manual-status").value,
       }
     : payload;
+
+  let successMessage = `${documentLabel} foi cadastrado com sucesso.`;
+  if (manualReviewAction === "approve") {
+    successMessage = `${documentLabel} teve sua extração aprovada com sucesso.`;
+  } else if (manualReviewAction === "reject") {
+    successMessage = `${documentLabel} teve sua extração reprovada.`;
+  } else if (isEditing) {
+    successMessage = `${documentLabel} foi atualizado com sucesso.`;
+  } else if (payload.action === "draft") {
+    successMessage = `${documentLabel} foi salvo como rascunho.`;
+  }
+
+  showFiscalToast(successMessage);
+  closeModal("manual-modal");
+
   const response = await fetch(isEditing ? `/api/v1/documents/${documentId}` : "/api/v1/documents/manual", {
     method: isEditing ? "PUT" : "POST",
     headers: authHeaders(),
@@ -407,11 +530,11 @@ async function submitManualForm(event) {
 
   if (!response.ok) {
     feedback.textContent = "Não foi possível salvar o documento.";
+    showFiscalToast("Não foi possível cadastrar o documento manualmente.", "error");
     return;
   }
 
   feedback.textContent = "Documento salvo com sucesso.";
-  closeModal("manual-modal");
   resetManualForm();
   documentsTable?.ajax.reload(null, false);
 }
@@ -434,6 +557,9 @@ async function submitAutomaticForm(event) {
   formData.append("file", file);
 
   feedback.textContent = "Enviando documento para análise...";
+  showFiscalToast("Documento cadastrado com sucesso. Ele entrou em fase de processamento. Aguarde!");
+  closeModal("auto-modal");
+  event.target.reset();
 
   const response = await fetch("/api/v1/documents/automatic", {
     method: "POST",
@@ -447,15 +573,15 @@ async function submitAutomaticForm(event) {
     try {
       const errorPayload = await response.json();
       feedback.textContent = errorPayload.detail || "Não foi possível enviar o documento.";
+      showFiscalToast(feedback.textContent, "error");
     } catch {
       feedback.textContent = "Não foi possível enviar o documento.";
+      showFiscalToast("Não foi possível enviar o documento para análise.", "error");
     }
     return;
   }
 
   feedback.textContent = "Documento enviado. Ele ficará pendente até validação humana.";
-  event.target.reset();
-  closeModal("auto-modal");
   documentsTable?.ajax.reload(null, false);
 }
 
@@ -489,6 +615,8 @@ document.getElementById("open-auto-modal")?.addEventListener("click", () => {
   document.getElementById("auto-form-feedback").textContent = "";
   openModal("auto-modal");
 });
+
+document.getElementById("fiscal-toast-close")?.addEventListener("click", hideFiscalToast);
 
 document.querySelectorAll("[data-close-modal]").forEach((button) => {
   button.addEventListener("click", () => {

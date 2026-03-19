@@ -23,7 +23,7 @@ class ManualDocumentPayload(BaseModel):
 
 
 class DocumentUpdatePayload(ManualDocumentPayload):
-    status: str = Field(pattern="^(processed|pending|draft|cancelled)$")
+    status: str = Field(pattern="^(processed|pending|unidentified|draft|cancelled)$")
 
 
 class DocumentRead(BaseModel):

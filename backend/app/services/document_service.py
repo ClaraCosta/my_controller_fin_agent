@@ -55,6 +55,7 @@ class DocumentService:
     STATUS_LABELS = {
         "processed": "Processado",
         "pending": "Pendente",
+        "unidentified": "Não identificado",
         "draft": "Rascunho",
         "cancelled": "Cancelado",
     }
@@ -155,19 +156,22 @@ class DocumentService:
         destination.write_bytes(contents)
 
         extracted_text = self._extract_text(str(destination))
-        parsed_payload = self._extract_structured_payload(expected_type, extracted_text)
+        ai_extracted_text = self._extract_text_with_ai(str(destination))
+        final_extracted_text = self._merge_extracted_texts(extracted_text, ai_extracted_text)
+        analysis = self._extract_structured_payload(expected_type, final_extracted_text)
+        final_document_type = analysis["document_type"] if analysis["document_type"] in {"nfe", "receipt"} else expected_type
 
         document = Document(
             client_id=client_id,
-            document_type=expected_type,
+            document_type=final_document_type,
             entry_mode="ocr_ai",
-            status="pending",
+            status="pending" if analysis["identified_document"] else "unidentified",
             file_name=file.filename,
             file_path=str(destination),
             mime_type=file.content_type,
-            extracted_text=extracted_text,
-            json_nfe=parsed_payload if expected_type == "nfe" else None,
-            json_rec=parsed_payload if expected_type == "receipt" else None,
+            extracted_text=final_extracted_text,
+            json_nfe=analysis["payload"] if final_document_type == "nfe" else None,
+            json_rec=analysis["payload"] if final_document_type == "receipt" else None,
         )
 
         if notes:
@@ -209,6 +213,7 @@ class DocumentService:
             "status": document.status,
             "file_name": document.file_name,
             "extracted_text": document.extracted_text or "",
+            "ocr_review_message": self._build_ocr_review_message(document),
         }
         if document.document_type == "nfe":
             return {
@@ -296,19 +301,105 @@ class DocumentService:
                 detail=f"Não foi possível ler o documento com OCR: {exc}",
             ) from exc
 
+    def _extract_text_with_ai(self, file_path: str) -> str:
+        suffix = Path(file_path).suffix.lower()
+        if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}:
+            return ""
+        try:
+            return self.ollama_service.extract_text_from_image(file_path)
+        except Exception:
+            return ""
+
+    def _merge_extracted_texts(self, tesseract_text: str, ai_text: str) -> str:
+        tesseract_text = (tesseract_text or "").strip()
+        ai_text = (ai_text or "").strip()
+        if tesseract_text and not ai_text:
+            return tesseract_text
+        if ai_text and not tesseract_text:
+            return ai_text
+        if not tesseract_text and not ai_text:
+            return ""
+
+        if self._normalize_text_block(tesseract_text) == self._normalize_text_block(ai_text):
+            return tesseract_text
+
+        return (
+            "OCR TESSERACT:\n"
+            f"{tesseract_text}\n\n"
+            "OCR IA:\n"
+            f"{ai_text}"
+        ).strip()
+
     def _extract_structured_payload(self, document_type: str, extracted_text: str) -> dict:
         default_payload = self.default_payload_for(document_type)
         if default_payload is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tipo de documento inválido.")
         if not extracted_text.strip():
-            return default_payload
+            return {
+                "identified_document": False,
+                "document_type": document_type,
+                "reason": "O OCR não conseguiu extrair texto legível do arquivo.",
+                "payload": default_payload,
+            }
 
         prompt = self._build_extraction_prompt(document_type=document_type, extracted_text=extracted_text)
         response = self.ollama_service.generate(prompt)
         parsed = self._parse_json_response(response)
+        heuristic = self._classify_document_signals(extracted_text, expected_type=document_type)
         if not isinstance(parsed, dict):
-            return default_payload
-        return self._merge_with_default(default_payload, parsed)
+            return self._fallback_analysis(document_type, extracted_text, default_payload, heuristic=heuristic)
+
+        if "data" in parsed:
+            detected_type = parsed.get("detected_type") or document_type
+            normalized_type = detected_type if detected_type in {"nfe", "receipt"} else document_type
+            detected_payload = self.default_payload_for(normalized_type) or default_payload
+            payload = parsed.get("data") if isinstance(parsed.get("data"), dict) else {}
+            merged_payload = self._merge_with_default(detected_payload, payload)
+            identified = bool(parsed.get("identified_document")) and self._has_meaningful_data(merged_payload)
+            reason = (parsed.get("reason") or "").strip()
+            should_override_with_heuristic = (
+                not identified
+                and heuristic["identified_document"]
+                and heuristic["document_type"] in {"nfe", "receipt"}
+            )
+            if should_override_with_heuristic:
+                normalized_type = heuristic["document_type"]
+                heuristic_default_payload = self.default_payload_for(normalized_type) or default_payload
+                heuristic_payload = deepcopy(heuristic_default_payload)
+                if normalized_type == "receipt":
+                    heuristic_payload = self._extract_receipt_payload_from_text(extracted_text, heuristic_payload)
+                merged_payload = self._merge_with_default(heuristic_payload, payload)
+                identified = self._has_meaningful_data(merged_payload)
+                reason = heuristic["reason"]
+            return {
+                "identified_document": identified,
+                "document_type": normalized_type,
+                "reason": reason or self._default_reason(identified),
+                "payload": merged_payload,
+            }
+
+        merged_payload = self._merge_with_default(default_payload, parsed)
+        identified = self._has_meaningful_data(merged_payload)
+        if not identified and heuristic["identified_document"]:
+            heuristic_type = heuristic["document_type"]
+            heuristic_payload = self.default_payload_for(heuristic_type) or default_payload
+            if heuristic_type == "receipt":
+                heuristic_payload = self._extract_receipt_payload_from_text(extracted_text, deepcopy(heuristic_payload))
+            merged_payload = self._merge_with_default(heuristic_payload, parsed if isinstance(parsed, dict) else {})
+            identified = self._has_meaningful_data(merged_payload)
+            return {
+                "identified_document": identified,
+                "document_type": heuristic_type,
+                "reason": heuristic["reason"],
+                "payload": merged_payload,
+            }
+
+        return {
+            "identified_document": identified,
+            "document_type": document_type,
+            "reason": self._default_reason(identified),
+            "payload": merged_payload,
+        }
 
     def _build_extraction_prompt(self, document_type: str, extracted_text: str) -> str:
         prompt_path = Path("backend/app/prompts/document_extraction_prompt.txt")
@@ -318,6 +409,282 @@ class DocumentService:
             .replace("{{json_schema}}", json.dumps(self.default_payload_for(document_type), ensure_ascii=False, indent=2))
             .replace("{{ocr_text}}", extracted_text[:12000])
         )
+
+    def _fallback_analysis(
+        self,
+        document_type: str,
+        extracted_text: str,
+        default_payload: dict,
+        heuristic: dict | None = None,
+    ) -> dict:
+        heuristic = heuristic or self._classify_document_signals(extracted_text, expected_type=document_type)
+        detected_type = heuristic["document_type"]
+        identified = heuristic["identified_document"]
+        fallback_payload = deepcopy(self.default_payload_for(detected_type) or default_payload)
+        if detected_type == "receipt":
+            fallback_payload = self._extract_receipt_payload_from_text(extracted_text, fallback_payload)
+        return {
+            "identified_document": identified,
+            "document_type": detected_type if identified else document_type,
+            "reason": heuristic["reason"] or self._default_reason(identified),
+            "payload": fallback_payload,
+        }
+
+    def _detect_document_type_heuristically(self, extracted_text: str, expected_type: str | None = None) -> str:
+        return self._classify_document_signals(extracted_text, expected_type=expected_type)["document_type"]
+
+    def _classify_document_signals(self, extracted_text: str, expected_type: str | None = None) -> dict:
+        normalized = extracted_text.lower()
+        nfe_strong_patterns = (
+            "nota fiscal",
+            "nf-e",
+            "nfe",
+            "danfe",
+            "chave de acesso",
+            "natureza da operação",
+            "destinatário/remetente",
+            "destinatario/remetente",
+            "inscrição estadual",
+            "inscricao estadual",
+            "dados do produto",
+            "cálculo do imposto",
+            "calculo do imposto",
+        )
+        receipt_strong_patterns = (
+            "recibo",
+            "comprovante",
+            "não vale como nota fiscal",
+            "nao vale como nota fiscal",
+            "recebemos de",
+            "valor pago",
+            "forma de pagamento",
+            "autorizada com senha",
+            "cod ec",
+            "doc:",
+            "aut:",
+            "nsu",
+            "pos",
+            "via loja",
+            "visa",
+            "mastercard",
+            "elo",
+            "cielo",
+            "rede",
+            "stone",
+            "pagseguro",
+            "mercado pago",
+            "tef",
+            "cliente:",
+            "descrição",
+            "descricao",
+            "discriminação",
+            "discriminação",
+            "total r$",
+            "assinatura",
+        )
+        receipt_context_tokens = (
+            "debito",
+            "débito",
+            "credito",
+            "crédito",
+            "a vista",
+            "vendedor",
+            "quant.",
+            "unid.",
+            "total",
+        )
+
+        has_cnpj = bool(re.search(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}", extracted_text))
+        has_cpf = bool(re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", extracted_text))
+        has_amount = bool(re.search(r"\d{1,3}(?:[.\s]\d{3})*,\d{2}", extracted_text))
+        has_date = bool(re.search(r"\b\d{2}/\d{2}/\d{2,4}\b", extracted_text))
+        has_doc_number = bool(re.search(r"\b(?:doc|aut|nsu|n[ºo]|numero)\s*[:\-]?\s*[a-z0-9-]{3,}", normalized, re.IGNORECASE))
+
+        nfe_score = sum(2 for pattern in nfe_strong_patterns if pattern in normalized)
+        if has_cnpj and ("emitente" in normalized or "destinat" in normalized):
+            nfe_score += 2
+        if has_amount and ("valor total" in normalized or "valor unit" in normalized):
+            nfe_score += 1
+
+        receipt_score = sum(2 for pattern in receipt_strong_patterns if pattern in normalized)
+        receipt_score += sum(1 for token in receipt_context_tokens if token in normalized)
+        if has_amount:
+            receipt_score += 1
+        if has_date:
+            receipt_score += 1
+        if has_cnpj or has_cpf:
+            receipt_score += 1
+        if has_doc_number:
+            receipt_score += 1
+
+        merchant_receipt_hint = self._extract_receipt_establishment_name(extracted_text)
+        if merchant_receipt_hint:
+            receipt_score += 1
+
+        if nfe_score >= 6 and nfe_score >= receipt_score + 1:
+            return {
+                "identified_document": True,
+                "document_type": "nfe",
+                "reason": "Documento compatível com nota fiscal por conter sinais fiscais estruturados.",
+            }
+
+        receipt_is_strong = (
+            receipt_score >= 6
+            or ("recibo" in normalized and has_amount)
+            or ("não vale como nota fiscal" in normalized or "nao vale como nota fiscal" in normalized)
+            or (("cielo" in normalized or "rede" in normalized or "stone" in normalized or "pagseguro" in normalized) and has_amount and (has_cnpj or has_doc_number))
+        )
+        if receipt_is_strong and receipt_score >= max(4, nfe_score):
+            return {
+                "identified_document": True,
+                "document_type": "receipt",
+                "reason": "Documento compatível com recibo ou comprovante financeiro.",
+            }
+
+        if expected_type == "receipt" and receipt_score >= 5 and (has_amount or has_cnpj or has_cpf):
+            return {
+                "identified_document": True,
+                "document_type": "receipt",
+                "reason": "Documento compatível com recibo pelo conjunto de sinais de pagamento e identificação.",
+            }
+
+        return {
+            "identified_document": False,
+            "document_type": "unknown",
+            "reason": "O documento não apresentou evidências suficientes de recibo ou nota fiscal.",
+        }
+
+    def _extract_receipt_payload_from_text(self, extracted_text: str, payload: dict) -> dict:
+        lines = [line.strip(" -*_=|\"'") for line in extracted_text.splitlines() if line.strip()]
+        normalized_lines = [line for line in lines if len(line) > 2]
+
+        cnpj_match = re.search(r"(\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2})", extracted_text)
+        date_match = re.search(r"\b(\d{2}/\d{2}/\d{2,4})\b", extracted_text)
+        amount_matches = re.findall(r"\d{1,3}(?:[.\s]\d{3})*,\d{2}", extracted_text)
+        payer_match = re.search(r"(?:AUTORIZADA COM SENHA|PORTADOR|CLIENTE)\s*[-:]?\s*([A-ZÀ-Ú][A-ZÀ-Ú\s\.]{4,})", extracted_text, re.IGNORECASE)
+        doc_match = re.search(r"\bDOC[:\s]*([A-Z0-9-]{4,})", extracted_text, re.IGNORECASE)
+
+        merchant_name = self._extract_receipt_establishment_name(extracted_text)
+        if not merchant_name and normalized_lines:
+            merchant_name = normalized_lines[0]
+
+        if doc_match:
+            payload["numero_recibo"] = doc_match.group(1).strip()
+        if date_match:
+            payload["data_emissao"] = date_match.group(1).strip()
+        if cnpj_match:
+            payload["recebedor"]["documento"] = cnpj_match.group(1).strip()
+        if merchant_name:
+            payload["recebedor"]["nome"] = merchant_name.strip()
+        if payer_match:
+            payload["pagador"]["nome"] = re.sub(r"\s+", " ", payer_match.group(1)).strip()
+        if amount_matches:
+            payload["valor"] = self._parse_brazilian_money(amount_matches[-1])
+
+        payment_tokens = []
+        for token in ("pix", "visa", "mastercard", "elo", "debito", "débito", "credito", "crédito"):
+            if token in extracted_text.lower():
+                payment_tokens.append(token.upper().replace("É", "E"))
+        if payment_tokens:
+            payload["forma_pagamento"] = " / ".join(dict.fromkeys(payment_tokens))
+
+        receipt_reference = self._extract_receipt_reference(normalized_lines)
+        if receipt_reference:
+            payload["referencia"] = receipt_reference
+
+        return payload
+
+    def _extract_receipt_establishment_name(self, extracted_text: str) -> str:
+        lines = [line.strip(" -*_=|\"'") for line in extracted_text.splitlines() if line.strip()]
+        normalized_lines = [line for line in lines if len(line) > 2]
+        establishment_tokens = (
+            "posto",
+            "mercado",
+            "farmacia",
+            "supermercado",
+            "padaria",
+            "restaurante",
+            "hotel",
+            "comercio",
+            "lanchonete",
+            "loja",
+            "suspensão",
+            "suspensao",
+            "rancho",
+            "auto serviço",
+            "auto servico",
+        )
+
+        candidates = [
+            line for line in normalized_lines
+            if any(token in line.lower() for token in establishment_tokens)
+        ]
+        if candidates:
+            return candidates[0].strip()
+
+        uppercase_candidates = [
+            line for line in normalized_lines
+            if len(line) >= 6 and sum(1 for char in line if char.isupper()) >= max(4, len([char for char in line if char.isalpha()]) * 0.6)
+        ]
+        if uppercase_candidates:
+            return uppercase_candidates[0].strip()
+
+        return ""
+
+    @staticmethod
+    def _extract_receipt_reference(lines: list[str]) -> str:
+        for line in lines:
+            lowered = line.lower()
+            if any(token in lowered for token in ("descrição", "descricao", "discriminação", "discriminacao", "referente", "produto", "venda", "serviço", "servico")):
+                return line[:140]
+        if lines:
+            return lines[0][:140]
+        return ""
+
+    @staticmethod
+    def _parse_brazilian_money(raw_value: str) -> float:
+        cleaned = raw_value.replace(" ", "")
+        if "," in cleaned:
+            cleaned = cleaned.replace(".", "").replace(",", ".")
+        else:
+            cleaned = cleaned.replace(".", "")
+        try:
+            return float(cleaned)
+        except ValueError:
+            return 0.0
+
+    @staticmethod
+    def _has_meaningful_data(payload: dict) -> bool:
+        def walk(value):
+            if isinstance(value, dict):
+                return any(walk(item) for item in value.values())
+            if isinstance(value, list):
+                return any(walk(item) for item in value)
+            if isinstance(value, str):
+                return bool(value.strip())
+            if isinstance(value, (int, float)):
+                return value not in (0, 0.0)
+            return False
+
+        return walk(payload)
+
+    @staticmethod
+    def _default_reason(identified: bool) -> str:
+        if identified:
+            return "Documento compatível com nota fiscal ou recibo/comprovante financeiro."
+        return "O documento anexado não corresponde a um recibo nem a uma nota fiscal."
+
+    def _build_ocr_review_message(self, document: Document) -> str:
+        extracted_text = (document.extracted_text or "").strip() or "Nenhum texto foi extraído."
+        if document.entry_mode != "ocr_ai":
+            return extracted_text
+        if document.status == "unidentified":
+            return (
+                "Não foi possível processar o documento pelo motivo de: "
+                "O documento anexado não corresponde um Recibo nem a uma nota fiscal. "
+                f"Texto extraído: {extracted_text}"
+            )
+        return f"Documento válido e processamento realizado com sucesso, dados extraídos: {extracted_text}"
 
     def _parse_json_response(self, response: str) -> dict | None:
         if not response.strip():
@@ -332,6 +699,10 @@ class DocumentService:
                 return json.loads(match.group(0))
             except json.JSONDecodeError:
                 return None
+
+    @staticmethod
+    def _normalize_text_block(value: str) -> str:
+        return re.sub(r"\s+", " ", value.strip().lower())
 
     def _merge_with_default(self, default_payload: dict, parsed_payload: dict) -> dict:
         merged = deepcopy(default_payload)

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://app_user:app_password@db:5432/ai_ops"
     ollama_base_url: str = "http://ollama:11434"
     ollama_model: str = "llama3.2"
+    ollama_vision_model: str = ""
     tesseract_cmd: str = "/usr/bin/tesseract"
     default_admin_email: str = "admin@example.com"
     default_admin_password: str = "admin123"
@@ -19,4 +20,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

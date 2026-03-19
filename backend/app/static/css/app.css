@@ -50,12 +50,20 @@ body {
 .dashboard-stat-card::after {
   content: "";
   position: absolute;
-  inset: auto -2rem -2rem auto;
-  height: 7rem;
-  width: 7rem;
+  right: 18%;
+  bottom: -2.5rem;
+  height: 10rem;
+  width: 10rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--stat-color) 10%, white);
-  filter: blur(4px);
+  filter: blur(14px);
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.dashboard-stat-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-stat-card-wide {

@@ -17,6 +17,7 @@ function clearSessionAndRedirect() {
 }
 
 let currentUserState = null;
+let systemConfirmResolver = null;
 
 function openGlobalModal(id) {
   const modal = document.getElementById(id);
@@ -30,6 +31,62 @@ function closeGlobalModal(id) {
   if (!modal) return;
   modal.classList.add("hidden");
   modal.classList.remove("flex");
+}
+
+function initSystemConfirmModal() {
+  const modal = document.getElementById("system-confirm-modal");
+  const title = document.getElementById("system-confirm-title");
+  const message = document.getElementById("system-confirm-message");
+  const acceptButton = document.getElementById("system-confirm-accept");
+  const cancelButton = document.getElementById("system-confirm-cancel");
+  const icon = document.getElementById("system-confirm-icon");
+
+  if (!modal || !title || !message || !acceptButton || !cancelButton || !icon) return;
+
+  const resolveAndClose = (value) => {
+    if (systemConfirmResolver) {
+      systemConfirmResolver(value);
+      systemConfirmResolver = null;
+    }
+    closeGlobalModal("system-confirm-modal");
+  };
+
+  acceptButton.addEventListener("click", () => resolveAndClose(true));
+  cancelButton.addEventListener("click", () => resolveAndClose(false));
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      resolveAndClose(false);
+    }
+  });
+
+  window.showSystemConfirm = function ({
+    titleText = "Confirmar ação",
+    messageText = "Tem certeza de que deseja continuar?",
+    confirmText = "Confirmar",
+    cancelText = "Cancelar",
+    tone = "primary",
+  } = {}) {
+    title.textContent = titleText;
+    message.textContent = messageText;
+    acceptButton.textContent = confirmText;
+    cancelButton.textContent = cancelText;
+
+    if (tone === "danger") {
+      icon.className = "mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#fff1ee] text-[1.2rem] text-[#dd6b4d]";
+      icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      acceptButton.className = "rounded-2xl bg-gradient-to-r from-[#e07a24] to-[#d64f4f] px-5 py-3 text-sm font-semibold text-white";
+    } else {
+      icon.className = "mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#edf4ff] text-[1.2rem] text-[#3478f6]";
+      icon.innerHTML = '<i class="fa-solid fa-circle-question"></i>';
+      acceptButton.className = "rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white";
+    }
+
+    openGlobalModal("system-confirm-modal");
+
+    return new Promise((resolve) => {
+      systemConfirmResolver = resolve;
+    });
+  };
 }
 
 function setUserIdentity(user) {
@@ -194,5 +251,6 @@ document.querySelectorAll("[data-close-global-modal]").forEach((button) => {
 document.getElementById("profile-form")?.addEventListener("submit", submitProfileForm);
 document.getElementById("password-form")?.addEventListener("submit", submitPasswordForm);
 
+initSystemConfirmModal();
 initTopbarMenu();
 loadCurrentUser();

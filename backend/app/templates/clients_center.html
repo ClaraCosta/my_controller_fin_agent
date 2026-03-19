@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+<section class="space-y-8">
+  <section class="rounded-[2rem] bg-gradient-to-r from-[#edf4ff] via-[#f7f9ff] to-[#fdf8ff] p-6 shadow-shell">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Central de Clientes</p>
+        <h3 class="mt-2 text-3xl font-extrabold tracking-tight text-[#18233d]">Gestão de base cadastral</h3>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-[#5f6f8c]">Área dedicada para cadastrar clientes individualmente, preparar importações em lote e acompanhar a base já registrada no sistema.</p>
+      </div>
+      <div class="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-[#65748f] shadow-sm">Cadastro manual ativo • Importação em lote preparada para expansão</div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-2">
+    <article class="rounded-[2rem] border border-[#dce6f8] bg-white p-6 shadow-shell">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Opção 1</p>
+          <h4 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Importar em lote</h4>
+          <p class="mt-2 text-sm leading-6 text-[#5f6f8c]">Prepare um arquivo em lote para acelerar a entrada de clientes na plataforma.</p>
+        </div>
+        <span class="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#edf3ff] text-[1.7rem] text-[#3478f6]">
+          <i class="fa-solid fa-file-import"></i>
+        </span>
+      </div>
+      <div class="mt-6">
+        <button id="open-batch-modal" class="rounded-2xl border border-[#dce5f4] bg-white px-5 py-3 text-sm font-semibold text-[#33415b] shadow-sm">Selecionar arquivo de lote</button>
+      </div>
+    </article>
+
+    <article class="rounded-[2rem] border border-[#dce6f8] bg-white p-6 shadow-shell">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Opção 2</p>
+          <h4 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Cadastrar cliente manualmente</h4>
+          <p class="mt-2 text-sm leading-6 text-[#5f6f8c]">Cadastre um novo cliente com CNPJ, status e contato principal diretamente pela interface.</p>
+        </div>
+        <span class="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#f1ebff] text-[1.7rem] text-[#7a5af8]">
+          <i class="fa-solid fa-user-plus"></i>
+        </span>
+      </div>
+      <div class="mt-6">
+        <button id="open-client-modal" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white shadow-soft">Novo cliente</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Clientes</p>
+        <h3 class="mt-1 text-3xl font-extrabold tracking-tight text-[#18233d]">Base registrada</h3>
+        <p class="mt-2 text-sm text-[#65748f]">Listagem real dos clientes já cadastrados, com edição, exclusão e consulta rápida de contato principal.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-gear"></i></div>
+        <div class="hidden h-11 w-11 items-center justify-center rounded-xl border border-[#e3e9f4] text-[#8ea0c0] md:flex"><i class="fa-solid fa-download"></i></div>
+      </div>
+    </div>
+    <div class="dashboard-table-wrap overflow-hidden rounded-[1.5rem]">
+      <table id="clients-table" class="display w-full">
+        <thead>
+          <tr>
+            <th><input type="checkbox" disabled class="h-4 w-4 rounded border-slate-300" /></th>
+            <th>Nome</th>
+            <th>Status</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>CNPJ</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </section>
+</section>
+
+<div id="clients-toast" class="pointer-events-none fixed inset-0 z-[60] hidden items-center justify-center bg-[#0f172a66] px-4 opacity-0 backdrop-blur-md transition-all duration-300">
+  <div id="clients-toast-card" class="flex w-full max-w-2xl items-start gap-4 rounded-[2rem] border border-[#d7e5ff] bg-white px-7 py-6 shadow-[0_28px_80px_rgba(31,42,68,0.22)]">
+    <span id="clients-toast-icon" class="mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#edf4ff] text-[1.2rem] text-[#3478f6]">
+      <i class="fa-solid fa-circle-check"></i>
+    </span>
+    <div class="flex-1">
+      <p id="clients-toast-title" class="text-lg font-extrabold text-[#18233d]">Operação concluída</p>
+      <p id="clients-toast-message" class="mt-2 text-base leading-7 text-[#5f6f8c]">Mensagem temporária.</p>
+    </div>
+    <button id="clients-toast-close" type="button" class="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f] transition hover:bg-[#eef4ff] hover:text-[#24324d]">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+</div>
+
+<div id="batch-import-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Importação em lote</p>
+        <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Preparar arquivo de importação</h3>
+      </div>
+      <button data-close-modal="batch-import-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="batch-import-form" class="grid gap-4 md:grid-cols-2">
+      <label class="block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Arquivo do lote</span>
+        <div class="rounded-[1.5rem] border border-dashed border-[#b8cdf5] bg-[#f8fbff] px-4 py-8 text-center text-sm text-[#5f6f8c]">
+          <i class="fa-solid fa-cloud-arrow-up mb-3 text-2xl text-[#3478f6]"></i>
+          <p>Anexe um CSV ou planilha com os clientes a serem carregados futuramente.</p>
+          <input id="batch-import-file" type="file" class="mt-4 block w-full text-sm" />
+        </div>
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Formato esperado</span>
+        <select id="batch-import-format" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
+          <option value="csv">CSV</option>
+          <option value="xlsx">Planilha XLSX</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Observações</span>
+        <input id="batch-import-notes" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Ex.: lote de novos fornecedores" />
+      </label>
+      <p id="batch-import-feedback" class="md:col-span-2 min-h-6 text-sm text-[#5f6f8c]"></p>
+      <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+        <button type="button" data-close-modal="batch-import-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+        <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Preparar importação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
+  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Cadastro de cliente</p>
+        <h3 id="client-modal-title" class="mt-2 text-2xl font-extrabold tracking-tight text-[#18233d]">Novo cliente</h3>
+      </div>
+      <button data-close-modal="client-modal" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f]"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="client-form" class="grid gap-4 md:grid-cols-2">
+      <input id="client-id" type="hidden" />
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Nome do cliente</span>
+        <input id="client-name" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Razão social ou nome" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Documento</span>
+        <input id="client-document-number" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="CNPJ" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Status</span>
+        <select id="client-status" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
+          <option value="active">Ativo</option>
+          <option value="new">Novo</option>
+          <option value="review">Em análise</option>
+          <option value="inactive">Inativo</option>
+        </select>
+      </label>
+      <div class="hidden md:block"></div>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Contato principal</span>
+        <input id="client-primary-contact-name" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Nome do contato" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Função</span>
+        <input id="client-primary-contact-role" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="Financeiro, compras..." />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Email</span>
+        <input id="client-primary-contact-email" type="email" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="contato@empresa.com" />
+      </label>
+      <label class="block">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Telefone</span>
+        <input id="client-primary-contact-phone" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3" placeholder="(00) 00000-0000" />
+      </label>
+      <p id="client-form-feedback" class="md:col-span-2 min-h-6 text-sm text-[#5f6f8c]"></p>
+      <div class="md:col-span-2 flex flex-wrap justify-end gap-3 pt-2">
+        <button type="button" data-close-modal="client-modal" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+        <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Salvar cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="/static/js/clients_center.js"></script>
+{% endblock %}

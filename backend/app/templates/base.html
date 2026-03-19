@@ -52,6 +52,12 @@
             </span>
             Dashboard
           </a>
+          <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/central-clientes' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/central-clientes">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/central-clientes' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">
+              <i class="fa-solid fa-users"></i>
+            </span>
+            Central de Clientes
+          </a>
           <a class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition {% if request.url.path == '/chat' %}bg-gradient-to-r from-[#4b86ff] to-[#7a6cff] text-white shadow-soft{% else %}text-[#d6e3fb] hover:bg-white/8 hover:text-white{% endif %}" href="/chat">
             <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl {% if request.url.path == '/chat' %}bg-white/20 text-white{% else %}bg-white/10 text-[#cfe0ff]{% endif %}">
               <i class="fa-solid fa-robot"></i>
@@ -186,6 +192,24 @@
             <button type="submit" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Atualizar senha</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div id="system-confirm-modal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-[#0f172a66] px-4 backdrop-blur-md">
+      <div class="w-full max-w-2xl rounded-[2rem] border border-[#d7e5ff] bg-white p-7 shadow-[0_28px_80px_rgba(31,42,68,0.22)]">
+        <div class="flex items-start gap-4">
+          <span id="system-confirm-icon" class="mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#edf4ff] text-[1.2rem] text-[#3478f6]">
+            <i class="fa-solid fa-circle-question"></i>
+          </span>
+          <div class="flex-1">
+            <p id="system-confirm-title" class="text-lg font-extrabold text-[#18233d]">Confirmar ação</p>
+            <p id="system-confirm-message" class="mt-2 text-base leading-7 text-[#5f6f8c]">Tem certeza de que deseja continuar?</p>
+          </div>
+        </div>
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <button type="button" id="system-confirm-cancel" class="rounded-2xl border border-[#dce5f4] px-5 py-3 text-sm font-semibold text-[#4f5d79]">Cancelar</button>
+          <button type="button" id="system-confirm-accept" class="rounded-2xl bg-gradient-to-r from-[#3478f6] to-[#6c5ce7] px-5 py-3 text-sm font-semibold text-white">Confirmar</button>
+        </div>
       </div>
     </div>
 

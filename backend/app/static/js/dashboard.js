@@ -86,7 +86,13 @@ async function openEditClient(clientId) {
 }
 
 async function deleteClient(clientId) {
-  const confirmed = window.confirm("Deseja realmente excluir este cliente?");
+  const confirmed = await window.showSystemConfirm?.({
+    titleText: "Excluir cliente",
+    messageText: "Deseja realmente excluir este cliente? Essa ação remove o registro da base.",
+    confirmText: "Excluir cliente",
+    cancelText: "Cancelar",
+    tone: "danger",
+  });
   if (!confirmed) return;
 
   const response = await fetch(`/api/v1/clients/${clientId}`, {
@@ -107,6 +113,12 @@ async function loadDashboard() {
   }
 
   const data = await response.json();
+  const getDonutMetricValue = (label) => data.donut_metrics.find((item) => item.label === label)?.value || 0;
+  const documentsStatusSummary = [
+    `${getDonutMetricValue("Processados")} proc.`,
+    `${getDonutMetricValue("Pendentes")} pend.`,
+    `${getDonutMetricValue("Cancelados")} canc.`,
+  ].join(" · ");
   const cards = [
     {
       label: "Clientes",
@@ -114,38 +126,42 @@ async function loadDashboard() {
       accent: "linear-gradient(135deg, #ffffff, #f8fbff)",
       icon: "fa-solid fa-user",
       color: "#3478f6",
-      helper: "Carteira principal",
-      trend: `${Math.max(0, data.total_clients)} total`,
-      trendTone: "bg-[#eaf2ff] text-[#3478f6]",
-      footerLabel: "Base ativa",
-      footerValue: Math.max(0, data.total_clients),
-      chart: [34, 22, 58, 41, 73, 52, 64],
+      meta: "Base ativa",
+      badge: "Total",
+      badgeTone: "bg-[#eaf2ff] text-[#3478f6]",
     },
     {
-      label: "Contatos",
-      value: data.total_contacts,
-      accent: "linear-gradient(135deg, #ffffff, #fff9f7)",
-      icon: "fa-solid fa-address-book",
-      color: "#ff7a59",
-      helper: "Rede operacional",
-      trend: `${Math.max(0, data.total_contacts)} total`,
-      trendTone: "bg-[#fff0ea] text-[#ff7a59]",
-      footerLabel: "Cobertura atual",
-      footerValue: Math.max(0, data.total_contacts),
-      chart: [16, 28, 24, 37, 32, 44],
-    },
-    {
-      label: "Solicitacoes",
-      value: data.total_requests,
+      label: "Documentos",
+      value: data.total_documents,
       accent: "linear-gradient(135deg, #ffffff, #f6f8ff)",
-      icon: "fa-solid fa-folder-open",
+      icon: "fa-solid fa-file-lines",
       color: "#3478f6",
-      helper: "Fluxo de atendimento",
-      trend: `${Math.max(0, data.total_requests)} total`,
-      trendTone: "bg-[#edf3ff] text-[#476be8]",
-      footerLabel: "Volume operacional",
-      footerValue: Math.max(0, data.total_requests),
-      chart: [20, 36, 29, 52, 39, 46],
+      meta: "Todos os status",
+      badge: "Resumo",
+      badgeTone: "bg-[#edf3ff] text-[#476be8]",
+      footerText: documentsStatusSummary,
+    },
+    {
+      label: "Docs gerados",
+      value: getDonutMetricValue("Processados"),
+      accent: "linear-gradient(135deg, #ffffff, #f7fff9)",
+      icon: "fa-solid fa-file-circle-check",
+      color: "#16a765",
+      meta: "Processados",
+      badge: "Sucesso",
+      badgeTone: "bg-[#e9fbf2] text-[#16a765]",
+      footerText: "Fluxo concluído",
+    },
+    {
+      label: "Docs pendentes",
+      value: getDonutMetricValue("Pendentes"),
+      accent: "linear-gradient(135deg, #ffffff, #fffaf5)",
+      icon: "fa-solid fa-clock",
+      color: "#e07a24",
+      meta: "Aguardando",
+      badge: "Pendentes",
+      badgeTone: "bg-[#fff3ea] text-[#e07a24]",
+      footerText: "Revisão humana",
     },
   ];
 
@@ -153,41 +169,29 @@ async function loadDashboard() {
   container.innerHTML = cards
     .map(
       (card) => `
-        <article class="dashboard-stat-card flex h-full min-h-[18rem] flex-col rounded-[1.8rem] border border-[#e6ebf4] p-5 shadow-sm" style="background: ${card.accent}; --stat-color: ${card.color};">
+        <article class="dashboard-stat-card flex h-full min-h-[13.5rem] flex-col rounded-[1.8rem] border border-[#e6ebf4] p-5 shadow-sm" style="background: ${card.accent}; --stat-color: ${card.color};">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-sm font-semibold text-[#51607d]">${card.label}</p>
+              <p class="mt-2 text-xs uppercase tracking-[0.18em] text-[#91a0ba]">${card.meta}</p>
             </div>
-            <span class="flex h-[0.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[1.5rem]" style="background: ${card.color}18; color: ${card.color};">
-              <i class="${card.icon} text-[2rem]"></i>
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.4rem]" style="background: ${card.color}16; color: ${card.color};">
+              <i class="${card.icon} text-[1.35rem]"></i>
             </span>
           </div>
-          <div class="mt-5 flex flex-1 items-end justify-between gap-4">
+          <div class="mt-7 flex flex-1 flex-col justify-between">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#91a0ba]">${card.helper}</p>
               <h3 class="mt-2 text-4xl font-black tracking-tight text-[#1f2a44]">${card.value}</h3>
-              <div class="mt-3 inline-flex rounded-xl px-3 py-2 text-xs font-semibold ${card.trendTone}">${card.trend}</div>
             </div>
-            <div class="dashboard-stat-mini-chart">
-              ${card.chart
-                .map(
-                  (point, index) =>
-                    `<span class="${index === card.chart.length - 2 ? "is-accent" : ""}" style="height:${point}px"></span>`
-                )
-                .join("")}
-            </div>
-          </div>
-          <div class="mt-5 flex items-center justify-between rounded-[1.2rem] bg-white/80 px-4 py-3">
-            <div class="flex items-center gap-3">
-              <span class="flex h-10 w-10 items-center justify-center rounded-xl" style="background:${card.color}14; color:${card.color};">
-                <i class="${card.icon} text-sm"></i>
-              </span>
-              <div>
-                <p class="text-sm font-semibold text-[#24324d]">${card.footerLabel}</p>
-                <p class="text-xs text-[#7f8da8]">Indicador resumido da base</p>
+            <div class="mt-5 flex items-center justify-between rounded-[1.2rem] bg-white/80 px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl" style="background:${card.color}14; color:${card.color};">
+                  <i class="${card.icon} text-sm"></i>
+                </span>
+                <p class="text-sm font-semibold text-[#24324d]">${card.badge}</p>
               </div>
+              <span class="inline-flex rounded-xl px-3 py-2 text-xs font-semibold ${card.badgeTone}">${card.footerText || card.meta}</span>
             </div>
-            <p class="text-xl font-black text-[#24324d]">${card.footerValue}</p>
           </div>
         </article>
       `

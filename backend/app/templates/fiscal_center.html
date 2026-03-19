@@ -9,7 +9,7 @@
         <h3 class="mt-2 text-3xl font-extrabold tracking-tight text-[#18233d]">Controle de documentos</h3>
         <p class="mt-2 max-w-2xl text-sm leading-6 text-[#5f6f8c]">Espaço para registrar recibos e notas fiscais por preenchimento manual ou leitura automática com OCR/IA.</p>
       </div>
-      <div class="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-[#65748f] shadow-sm">Fluxo manual já integrado • OCR entra como pendente até validação humana</div>
+     
     </div>
   </section>
 
@@ -87,8 +87,23 @@
   </section>
 </section>
 
+<div id="fiscal-toast" class="pointer-events-none fixed inset-0 z-[60] hidden items-center justify-center bg-[#0f172a66] px-4 opacity-0 backdrop-blur-md transition-all duration-300">
+  <div id="fiscal-toast-card" class="flex w-full max-w-2xl items-start gap-4 rounded-[2rem] border border-[#d7e5ff] bg-white px-7 py-6 shadow-[0_28px_80px_rgba(31,42,68,0.22)]">
+    <span id="fiscal-toast-icon" class="mt-0.5 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#edf4ff] text-[1.2rem] text-[#3478f6]">
+      <i class="fa-solid fa-circle-check"></i>
+    </span>
+    <div class="flex-1">
+      <p id="fiscal-toast-title" class="text-lg font-extrabold text-[#18233d]">Operação concluída</p>
+      <p id="fiscal-toast-message" class="mt-2 text-base leading-7 text-[#5f6f8c]">Mensagem temporária.</p>
+    </div>
+    <button id="fiscal-toast-close" type="button" class="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5f8ff] text-[#65748f] transition hover:bg-[#eef4ff] hover:text-[#24324d]">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+</div>
+
 <div id="manual-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#0f172acc] px-4">
-  <div class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-shell">
+  <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-shell">
     <div class="mb-5 flex items-start justify-between gap-4">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#2b65d9]">Cadastro manual</p>
@@ -99,6 +114,10 @@
     <form id="manual-document-form" class="grid gap-4 md:grid-cols-2">
       <input id="manual-document-id" type="hidden" />
       <input id="manual-document-type" type="hidden" />
+      <label id="manual-ocr-text-wrap" class="hidden block md:col-span-2">
+        <span class="mb-2 block text-sm font-medium text-[#51607d]">Texto extraído via OCR</span>
+        <div id="manual-ocr-text" class="min-h-36 whitespace-pre-wrap rounded-2xl border border-[#dce5f4] bg-[#f8fbff] px-4 py-3 text-sm leading-6 text-[#5f6f8c]"></div>
+      </label>
       <label class="block">
         <span class="mb-2 block text-sm font-medium text-[#51607d]">Cliente</span>
         <select id="manual-client-id" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
@@ -126,13 +145,10 @@
         <select id="manual-status" class="w-full rounded-2xl border border-[#dce5f4] px-4 py-3">
           <option value="processed">Processado</option>
           <option value="pending">Pendente</option>
+          <option value="unidentified">Não identificado</option>
           <option value="draft">Rascunho</option>
           <option value="cancelled">Cancelado</option>
         </select>
-      </label>
-      <label id="manual-ocr-text-wrap" class="hidden block md:col-span-2">
-        <span class="mb-2 block text-sm font-medium text-[#51607d]">Texto extraído via OCR</span>
-        <textarea id="manual-ocr-text" readonly class="min-h-36 w-full rounded-2xl border border-[#dce5f4] bg-[#f8fbff] px-4 py-3 text-sm text-[#5f6f8c]"></textarea>
       </label>
       <div id="manual-extra-fields" class="grid gap-4 md:col-span-2 md:grid-cols-2"></div>
       <p id="manual-form-feedback" class="md:col-span-2 min-h-6 text-sm text-[#5f6f8c]"></p>
